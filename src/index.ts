@@ -16,6 +16,8 @@ import { TelegramMessage, TelegramUpdate } from "./chat/types/telegram.type";
 import { GroupService } from "./group/group.service";
 import { SqliteGroupRepository } from "./group/group.sqlite.repository";
 import { ExpenseService } from "./expense/expense.service";
+import { GetPayoutCommand } from "./chat/commands/get-payouts.command";
+import { GetExpensesCommand } from "./chat/commands/get-expenses.command copy";
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -37,16 +39,13 @@ const chatService = new ChatService(telegramAdapter);
 const groupService = new GroupService(groupRepository);
 const userService = new UserService(userRepository);
 
-const registry = new CommandRegistry().register(
-  new ClosegroupCommand(groupService)
-);
-
 const chatUserService = new ChatUserService(userService, groupService);
-const chatExpenseService = new ChatExpenseService(
-  expenseService,
-  userService,
-  groupService
-);
+const chatExpenseService = new ChatExpenseService(expenseService, groupService);
+
+const registry = new CommandRegistry()
+  .register(new ClosegroupCommand(groupService))
+  .register(new GetPayoutCommand(chatExpenseService))
+  .register(new GetExpensesCommand(chatExpenseService));
 
 const aiService = new AIService(
   openaiAdapter,

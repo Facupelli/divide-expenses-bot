@@ -1,12 +1,10 @@
 import { NewExpense } from "../db/schema";
 import { GroupService } from "../group/group.service";
-import { UserService } from "../user/user.service";
 import { ExpenseService } from "./expense.service";
 
 export class ChatExpenseService {
   constructor(
     private expenseService: ExpenseService,
-    private userService: UserService,
     private groupService: GroupService
   ) {}
 
@@ -76,7 +74,7 @@ export class ChatExpenseService {
     }
   }
 
-  async getPayments(chatId: string) {
+  async getPayouts(chatId: string) {
     try {
       const groupId = await this.groupService.getActive(chatId);
 

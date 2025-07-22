@@ -72,7 +72,7 @@ export class AIService {
 
   private async callFunction(name: string, args: any, chatId: string) {
     if (name === "get_payments") {
-      return await this.chatExpenseService.getPayments(chatId);
+      return await this.chatExpenseService.getPayouts(chatId);
     }
     if (name === "get_expenses") {
       return await this.chatExpenseService.getAllExpenses(chatId);
