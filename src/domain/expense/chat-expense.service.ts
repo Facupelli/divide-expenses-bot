@@ -1,4 +1,4 @@
-import type { NewExpense } from "../db/schema";
+import type { NewExpense } from "../../db/schema";
 import type { GroupService } from "../group/group.service";
 import type { ExpenseService } from "./expense.service";
 import { formatAmount } from "./price.helper";

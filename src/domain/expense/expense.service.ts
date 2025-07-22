@@ -1,4 +1,4 @@
-import { insertExpenseSchema, type NewExpense } from "../db/schema";
+import { insertExpenseSchema, type NewExpense } from "../../db/schema";
 import type { SqliteExpenseRepository } from "./expense.sqlite.repository";
 
 export class ExpenseService {

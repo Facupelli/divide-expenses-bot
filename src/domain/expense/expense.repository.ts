@@ -1,4 +1,4 @@
-import type { Expense, NewExpense } from "../db/schema";
+import type { Expense, NewExpense } from "../../db/schema";
 
 export interface ExpenseRepository {
 	getSplitBetween(expenseId: number): Promise<{ userName: string }[]>;

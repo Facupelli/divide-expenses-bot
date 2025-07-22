@@ -1,4 +1,4 @@
-import type { GroupService } from "../group/group.service";
+import type { GroupService } from "../domain/group/group.service";
 import type { UserService } from "./user.service";
 
 export class ChatUserService {

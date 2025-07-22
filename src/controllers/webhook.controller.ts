@@ -1,6 +1,4 @@
 import type { Request, Response } from "express";
-import { AIService } from "../ai/ai.service";
-import { OpenAIAdapter } from "../ai/open-ai-adapter";
 import { ChatService } from "../chat/chat.service";
 import { ClosegroupCommand } from "../chat/commands/close-group.command";
 import { CommandRegistry } from "../chat/commands/command-registry";
@@ -11,14 +9,16 @@ import type {
 	TelegramMessage,
 	TelegramUpdate,
 } from "../chat/types/telegram.type";
-import { ChatExpenseService } from "../expense/chat-expense.service";
-import { ExpenseService } from "../expense/expense.service";
-import { SqliteExpenseRepository } from "../expense/expense.sqlite.repository";
-import { GroupService } from "../group/group.service";
-import { SqliteGroupRepository } from "../group/group.sqlite.repository";
-import { ChatUserService } from "../user/chat-user.service";
-import { UserService } from "../user/user.service";
-import { SqliteUserRepository } from "../user/user.sqlite.repository";
+import { AIService } from "../domain/ai/ai.service";
+import { OpenAIAdapter } from "../domain/ai/open-ai-adapter";
+import { ChatExpenseService } from "../domain/expense/chat-expense.service";
+import { ExpenseService } from "../domain/expense/expense.service";
+import { SqliteExpenseRepository } from "../domain/expense/expense.sqlite.repository";
+import { GroupService } from "../domain/group/group.service";
+import { SqliteGroupRepository } from "../domain/group/group.sqlite.repository";
+import { ChatUserService } from "../domain/user/chat-user.service";
+import { UserService } from "../domain/user/user.service";
+import { SqliteUserRepository } from "../domain/user/user.sqlite.repository";
 
 // Adapters
 const telegramAdapter = new TelegramChatAdapter();
@@ -48,7 +48,6 @@ const aiService = new AIService(
 	openaiAdapter,
 	chatUserService,
 	chatExpenseService,
-	groupService,
 );
 
 export async function handleWebhook(req: Request, res: Response) {

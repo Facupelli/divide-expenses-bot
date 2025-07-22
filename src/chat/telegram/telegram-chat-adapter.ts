@@ -54,7 +54,7 @@ export class TelegramChatAdapter implements ChatProvider {
 		return true;
 	}
 
-	async setWebhook(url: string): Promise<void> {
+	async setWebhook(): Promise<void> {
 		try {
 			const requestUrl = `${this.telegramUrl}/setWebhook`;
 

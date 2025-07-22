@@ -1,5 +1,5 @@
 import { and, eq, exists } from "drizzle-orm";
-import { db } from "../db";
+import { db } from "../../db";
 import {
 	type Expense,
 	expenseParticipants,
@@ -7,7 +7,7 @@ import {
 	groups,
 	insertExpenseParticipantSchema,
 	type NewExpense,
-} from "../db/schema";
+} from "../../db/schema";
 import type { ExpenseRepository } from "./expense.repository";
 
 export class SqliteExpenseRepository implements ExpenseRepository {
