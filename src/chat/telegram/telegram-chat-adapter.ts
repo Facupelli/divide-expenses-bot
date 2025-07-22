@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import type { ChatProvider } from "./types";
+import type { ChatProvider } from "../types";
 
 export class TelegramChatAdapter implements ChatProvider {
 	private readonly telegramUrl: string;
@@ -105,6 +105,24 @@ export class TelegramChatAdapter implements ChatProvider {
 			body: JSON.stringify({
 				commands,
 				scope,
+			}),
+		});
+
+		const data = await response.json();
+
+		console.log({ data });
+	}
+
+	async setBotName(name: string) {
+		const requestUrl = `${this.telegramUrl}/setMyName`;
+
+		const response = await fetch(requestUrl, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				name,
 			}),
 		});
 

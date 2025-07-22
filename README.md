@@ -32,6 +32,23 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 
 ---
 
+## Funciones
+
+ - Crear un grupo de personas para compartir gastos (IA function_calling)
+ - Agregar un gasto con: pagador, monto, descripción, entre cuantos se divide (IA function_calling)
+ - Mostrar todos los gastos del grupo (IA function_calling y comando)
+ - Mostrar los pagos para el ajuste de cuentas (IA function_calling y comando)
+ - Cerrar el grupo para comenzar uno nuevo (comando)
+
+---
+
+## Ideas para implementar y cosas para mejorar
+
+ - [ ] Formatear la fecha de manera amigable
+ - [ ] Ofrecer opción para agrupar la lista de gastos por persona
+
+---
+
 ## Imágenes
 
 <p align="center">
@@ -40,4 +57,8 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 
 <p align="center">
   <img src="./images/demo-1.1.jpeg" alt="Demo 1.1" width="300" height="600"/>
+</p>
+
+<p align="center">
+  <img src="./images/demo-2.jpeg" alt="Demo 2" width="300" height="600"/>
 </p>

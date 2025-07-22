@@ -8,7 +8,8 @@ import { ClosegroupCommand } from "./chat/commands/close-group.command";
 import { CommandRegistry } from "./chat/commands/command-registry";
 import { GetExpensesCommand } from "./chat/commands/get-expenses.command copy";
 import { GetPayoutCommand } from "./chat/commands/get-payouts.command";
-import { TelegramChatAdapter } from "./chat/telegram-chat-adapter";
+import { TelegramService } from "./chat/telegram/telegram.service";
+import { TelegramChatAdapter } from "./chat/telegram/telegram-chat-adapter";
 import type {
 	TelegramMessage,
 	TelegramUpdate,
@@ -50,6 +51,7 @@ const registry = new CommandRegistry()
 	.register(new GetPayoutCommand(chatExpenseService))
 	.register(new GetExpensesCommand(chatExpenseService));
 
+const telegramService = new TelegramService(telegramAdapter);
 const aiService = new AIService(
 	openaiAdapter,
 	chatUserService,
@@ -71,7 +73,14 @@ app.get("/webhook-info", async (_, res, __) => {
 app.post("/commands", async (req, res, _) => {
 	const body = req.body;
 
-	await chatService.setCommands(body.commands, body.scope);
+	await telegramService.setCommands(body.commands, body.scope);
+	return res.sendStatus(200);
+});
+
+app.post("/bot-name", async (req, res, _) => {
+	const body = req.body;
+
+	await telegramService.setBotName(body.name);
 	return res.sendStatus(200);
 });
 
