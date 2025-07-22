@@ -5,7 +5,7 @@ export class TelegramService {
 
 	async setCommands(
 		commands: { command: string; description: string }[],
-		scope: string,
+		scope?: string,
 	) {
 		return await this.telegramAdapter.setCommands(commands, scope);
 	}

@@ -8,7 +8,6 @@ import { ClosegroupCommand } from "./chat/commands/close-group.command";
 import { CommandRegistry } from "./chat/commands/command-registry";
 import { GetExpensesCommand } from "./chat/commands/get-expenses.command copy";
 import { GetPayoutCommand } from "./chat/commands/get-payouts.command";
-import { TelegramService } from "./chat/telegram/telegram.service";
 import { TelegramChatAdapter } from "./chat/telegram/telegram-chat-adapter";
 import type {
 	TelegramMessage,
@@ -19,6 +18,7 @@ import { ExpenseService } from "./expense/expense.service";
 import { SqliteExpenseRepository } from "./expense/expense.sqlite.repository";
 import { GroupService } from "./group/group.service";
 import { SqliteGroupRepository } from "./group/group.sqlite.repository";
+import telegramRouter from "./routes/telegram.route";
 import { ChatUserService } from "./user/chat-user.service";
 import { UserService } from "./user/user.service";
 import { SqliteUserRepository } from "./user/user.sqlite.repository";
@@ -51,7 +51,6 @@ const registry = new CommandRegistry()
 	.register(new GetPayoutCommand(chatExpenseService))
 	.register(new GetExpensesCommand(chatExpenseService));
 
-const telegramService = new TelegramService(telegramAdapter);
 const aiService = new AIService(
 	openaiAdapter,
 	chatUserService,
@@ -65,22 +64,10 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+app.use("/telegram", telegramRouter);
+
 app.get("/webhook-info", async (_, res, __) => {
 	await chatService.getWebhookInfo();
-	return res.sendStatus(200);
-});
-
-app.post("/commands", async (req, res, _) => {
-	const body = req.body;
-
-	await telegramService.setCommands(body.commands, body.scope);
-	return res.sendStatus(200);
-});
-
-app.post("/bot-name", async (req, res, _) => {
-	const body = req.body;
-
-	await telegramService.setBotName(body.name);
 	return res.sendStatus(200);
 });
 
