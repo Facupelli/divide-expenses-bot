@@ -17,7 +17,11 @@ export class ExpenseService {
 			groupId,
 		});
 
-		await this.expenseRepository.save(validatedExpense, splitBetween, groupId);
+		return await this.expenseRepository.save(
+			validatedExpense,
+			splitBetween,
+			groupId,
+		);
 	}
 
 	async getSplitBetween(expenseId: number) {

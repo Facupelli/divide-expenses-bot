@@ -13,6 +13,7 @@ CREATE TABLE `expenses` (
 	`payer` text NOT NULL,
 	`amount` integer NOT NULL,
 	`description` text NOT NULL,
+	`created_at` integer NOT NULL,
 	FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -20,7 +21,8 @@ CREATE TABLE `groups` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`chat_id` text NOT NULL,
 	`isActive` integer NOT NULL,
-	`name` text
+	`name` text,
+	`created_at` integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

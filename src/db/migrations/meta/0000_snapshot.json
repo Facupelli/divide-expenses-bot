@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ef03238e-f110-4462-a03a-aa7b01d7c0fe",
+  "id": "38fa7a19-a6bd-40c8-98b4-c4a312c4ca62",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "expense_participants": {
@@ -109,6 +109,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -160,6 +167,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
