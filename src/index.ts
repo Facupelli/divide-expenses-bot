@@ -31,18 +31,22 @@ if (!openaiApiKey || !telegramToken || !telegramWebhook) {
 	throw new Error("ENV variable missing");
 }
 
+// Adapters
 const telegramAdapter = new TelegramChatAdapter(telegramToken, telegramWebhook);
 const openaiAdapter = new OpenAIAdapter(openaiApiKey);
 
+// Repositories
 const userRepository = new SqliteUserRepository();
 const expenseRepository = new SqliteExpenseRepository();
 const groupRepository = new SqliteGroupRepository();
 
+// General Services
 const expenseService = new ExpenseService(expenseRepository);
 const chatService = new ChatService(telegramAdapter);
 const groupService = new GroupService(groupRepository);
 const userService = new UserService(userRepository);
 
+// Chat Services
 const chatUserService = new ChatUserService(userService, groupService);
 const chatExpenseService = new ChatExpenseService(expenseService, groupService);
 
