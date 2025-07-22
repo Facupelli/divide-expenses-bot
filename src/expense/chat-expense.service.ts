@@ -1,18 +1,18 @@
-import { insertExpenseSchema, NewExpense } from "../db/schema";
+import { NewExpense } from "../db/schema";
 import { GroupService } from "../group/group.service";
 import { UserService } from "../user/user.service";
-import { SqliteExpenseRepository } from "./expense.sqlite.repository";
+import { ExpenseService } from "./expense.service";
 
 export class ChatExpenseService {
   constructor(
-    private expenseRepository: SqliteExpenseRepository,
+    private expenseService: ExpenseService,
     private userService: UserService,
     private groupService: GroupService
   ) {}
 
   async getAllExpenses(chatId: string) {
     try {
-      const expensesList = await this.expenseRepository.getAll(chatId);
+      const expensesList = await this.expenseService.getAll(chatId);
 
       return {
         success: true,
@@ -46,7 +46,7 @@ export class ChatExpenseService {
       };
     }
 
-    const isUserValid = await this.userService.checkUserIsInParticipants(
+    const isUserValid = await this.groupService.checkUserIsInGroup(
       newExpense.payer,
       chatId
     );
@@ -60,19 +60,10 @@ export class ChatExpenseService {
     }
 
     try {
-      const validatedExpense = insertExpenseSchema.parse({
-        ...newExpense,
-        groupId,
-      });
-
-      await this.expenseRepository.save(
-        validatedExpense,
-        splitBetween,
-        groupId
-      );
+      await this.expenseService.save(newExpense, splitBetween, groupId);
 
       const message = `✅ Gasto registrado:\n
-      - ${validatedExpense.payer} pagó ${validatedExpense.amount} por ${validatedExpense.description}
+      - ${newExpense.payer} pagó ${newExpense.amount} por ${newExpense.description}
       `;
 
       return { success: true, message };
@@ -97,7 +88,7 @@ export class ChatExpenseService {
         };
       }
 
-      const expensesList = await this.expenseRepository.getAll(chatId);
+      const expensesList = await this.expenseService.getAll(chatId);
       const usersList = await this.groupService.getUsers(chatId);
       // STEP 1 - get users balances
       const usersBalance: Record<string, number> = {};
@@ -105,7 +96,7 @@ export class ChatExpenseService {
       usersList.forEach((user) => (usersBalance[user] = 0));
 
       for (const expense of expensesList) {
-        const splitBetween = await this.expenseRepository.getSplitBetween(
+        const splitBetween = await this.expenseService.getSplitBetween(
           expense.id
         );
 

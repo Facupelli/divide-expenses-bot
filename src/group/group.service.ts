@@ -4,6 +4,12 @@ import { SqliteGroupRepository } from "./group.sqlite.repository";
 export class GroupService {
   constructor(private groupRepository: SqliteGroupRepository) {}
 
+  async checkUserIsInGroup(userName: string, chatId: string): Promise<boolean> {
+    const users = await this.groupRepository.getUsers(chatId);
+
+    return users.some((name) => name === userName);
+  }
+
   async save(newGroup: NewGroup): Promise<{ id: number }> {
     const validatedData = insertGroupSchema.parse(newGroup);
 
