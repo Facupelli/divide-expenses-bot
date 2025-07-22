@@ -6,6 +6,10 @@ Ideal para juntadas, viajes o cualquier situación donde haya que dividir gastos
 
 ---
 
+# Repo en progreso
+
+---
+
 ## 🚀 ¿Qué hace?
 
 - Forma un grupo de personas entre los que se repartirán los gastos.
@@ -27,3 +31,8 @@ Ideal para juntadas, viajes o cualquier situación donde haya que dividir gastos
 La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz de mensajería.
 
 ---
+
+## Imágenes
+
+![Demo 1](./images/demo-1.jpg)
+![Demo 1.1](./images/demo-1.1.jpg)
