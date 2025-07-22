@@ -5,7 +5,14 @@ export class TelegramChatAdapter implements ChatProvider {
 	private readonly telegramUrl: string;
 	private readonly webhookUrl: string;
 
-	constructor(token: string, webhook: string) {
+	constructor() {
+		const token = process.env.TELEGRAM_BOT_TOKEN;
+		const webhook = process.env.TELEGRAM_WEBHOOK_URL;
+
+		if (!token || !webhook) {
+			throw new Error("TELEGRAM ENV variable missing");
+		}
+
 		this.telegramUrl = `https://api.telegram.org/bot${token}`;
 		this.webhookUrl = webhook;
 	}

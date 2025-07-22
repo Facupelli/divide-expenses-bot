@@ -46,6 +46,7 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 
  - [ ] Formatear la fecha de manera amigable
  - [ ] Ofrecer opción para agrupar la lista de gastos por persona
+ - [ ] Creación de dependencias duplicado en los routers?
 
 ---
 

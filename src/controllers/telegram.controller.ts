@@ -6,14 +6,7 @@ import type {
 	SetCommandsBody,
 } from "../validators/telegram.validator";
 
-const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-const telegramWebhook = process.env.TELEGRAM_WEBHOOK_URL;
-
-if (!telegramToken || !telegramWebhook) {
-	throw new Error("ENV variable missing");
-}
-
-const telegramAdapter = new TelegramChatAdapter(telegramToken, telegramWebhook);
+const telegramAdapter = new TelegramChatAdapter();
 const telegramService = new TelegramService(telegramAdapter);
 
 export const setCommands = async (req: Request, res: Response) => {
