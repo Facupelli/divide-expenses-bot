@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@biomejs/biome": "^2.1.2",
     "@types/cors": "^2.8.19",
     "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
