@@ -8,7 +8,18 @@ export class ChatService {
     return this.chat.validateWebhook(req);
   }
 
-  async sendMessage(chatId: string, text: string) {
+  async getWebhookInfo(): Promise<void> {
+    return this.getWebhookInfo();
+  }
+
+  async sendMessage(chatId: number, text: string) {
     return await this.chat.sendMessage(chatId, text);
+  }
+
+  async setCommands(
+    commands: { command: string; description: string }[],
+    scope: string
+  ) {
+    return await this.chat.setCommands(commands, scope);
   }
 }

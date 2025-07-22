@@ -10,6 +10,11 @@ import { ChatExpenseService } from "./expense/chat-expense.service";
 import { SqliteUserRepository } from "./user/user.sqlite.repository";
 import { SqliteExpenseRepository } from "./expense/expense.sqlite.repository";
 import { UserService } from "./user/user.service";
+import { CommandRegistry } from "./chat/commands/command-registry";
+import { ClosegroupCommand } from "./chat/commands/close-group.command";
+import { TelegramMessage, TelegramUpdate } from "./chat/types/telegram.type";
+import { GroupService } from "./group/group.service";
+import { SqliteGroupRepository } from "./group/group.sqlite.repository";
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -20,24 +25,32 @@ if (!openaiApiKey || !telegramToken || !telegramWebhook) {
 }
 
 const telegramAdapter = new TelegramChatAdapter(telegramToken, telegramWebhook);
-const chatService = new ChatService(telegramAdapter);
+const openaiAdapter = new OpenAIAdapter(openaiApiKey);
 
 const userRepository = new SqliteUserRepository();
 const expenseRepository = new SqliteExpenseRepository();
+const groupRepository = new SqliteGroupRepository();
 
-const openaiAdapter = new OpenAIAdapter(openaiApiKey);
+const chatService = new ChatService(telegramAdapter);
+const groupService = new GroupService(groupRepository);
+const userService = new UserService(userRepository, groupService);
 
-const userService = new UserService(userRepository);
-const chatUserService = new ChatUserService(userRepository);
+const registry = new CommandRegistry().register(
+  new ClosegroupCommand(groupService)
+);
+
+const chatUserService = new ChatUserService(userService, groupService);
 const chatExpenseService = new ChatExpenseService(
   expenseRepository,
-  userService
+  userService,
+  groupService
 );
 
 const aiService = new AIService(
   openaiAdapter,
   chatUserService,
-  chatExpenseService
+  chatExpenseService,
+  groupService
 );
 
 const app = express();
@@ -47,20 +60,51 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/webhook-info", async (req, res, next) => {
+  await chatService.getWebhookInfo();
+  return res.sendStatus(200);
+});
+
+app.post("/commands", async (req, res, next) => {
+  const body = req.body;
+
+  await chatService.setCommands(body.commands, body.scope);
   return res.sendStatus(200);
 });
 
 app.post("/webhook", async (req, res, next) => {
-  const body = req.body;
-
   const isValidWebhook = chatService.validateWebhook(req);
 
   if (!isValidWebhook) {
     return res.sendStatus(200);
   }
 
-  const text = body.message.text;
-  const chatId = body.message.chat.id;
+  const update: TelegramUpdate = req.body;
+  const message: TelegramMessage | undefined = update.message;
+  // console.dir({ update }, { depth: null });
+
+  if (message == null) {
+    return res.sendStatus(200);
+  }
+
+  const entities = message.entities;
+  const text = message.text;
+  const chatId = message.chat.id;
+
+  if (text == null) {
+    return res.sendStatus(200);
+  }
+
+  const cmdEntity = entities?.find((e) => e.type === "bot_command");
+
+  if (cmdEntity != null && text != null) {
+    const command = registry.get(text);
+    if (command) {
+      const commandResult = await command.execute(chatId, message);
+      await chatService.sendMessage(chatId, commandResult.message);
+      return res.sendStatus(200);
+    }
+  }
+
   const response = await aiService.createResponse(chatId, text);
   if (response != null) {
     await chatService.sendMessage(chatId, response);

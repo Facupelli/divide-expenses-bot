@@ -10,7 +10,7 @@ export class TelegramChatAdapter implements ChatProvider {
     this.webhookUrl = webhook;
   }
 
-  async sendMessage(chatId: string, text: string): Promise<void> {
+  async sendMessage(chatId: number, text: string): Promise<void> {
     try {
       const requestUrl = `${this.telegramUrl}/sendMessage`;
 
@@ -87,5 +87,27 @@ export class TelegramChatAdapter implements ChatProvider {
       console.error({ error });
       throw error;
     }
+  }
+
+  async setCommands(
+    commands: { command: string; description: string }[],
+    scope?: string
+  ): Promise<void> {
+    const requestUrl = `${this.telegramUrl}/setMyCommands`;
+
+    const response = await fetch(requestUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        commands,
+        scope,
+      }),
+    });
+
+    const data = await response.json();
+
+    console.log({ data });
   }
 }

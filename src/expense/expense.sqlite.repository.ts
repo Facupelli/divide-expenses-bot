@@ -1,24 +1,62 @@
+import { and, eq, exists } from "drizzle-orm";
 import { db } from "../db";
 import {
   Expense,
   expenseParticipants,
   expenses,
+  groups,
   insertExpenseParticipantSchema,
   NewExpense,
 } from "../db/schema";
 import { ExpenseRepository } from "./expense.repository";
 
 export class SqliteExpenseRepository implements ExpenseRepository {
-  async getAll(): Promise<Expense[]> {
+  async getAll(chatId: string): Promise<Expense[]> {
     try {
-      return await db.select().from(expenses);
+      const groupExpenses = await db
+        .select()
+        .from(expenses)
+        .where(
+          exists(
+            db
+              .select()
+              .from(groups)
+              .where(
+                and(
+                  eq(groups.id, expenses.groupId),
+                  eq(groups.chatId, chatId),
+                  eq(groups.isActive, true)
+                )
+              )
+          )
+        );
+
+      return groupExpenses;
     } catch (error) {
       console.error({ error });
       throw error;
     }
   }
 
-  async save(expense: NewExpense, splitBetween: string[]): Promise<void> {
+  async getSplitBetween(expenseId: number): Promise<{ userName: string }[]> {
+    try {
+      const splitBetween = await db
+        .select({ userName: expenseParticipants.userName })
+        .from(expenseParticipants)
+        .where(eq(expenseParticipants.expenseId, expenseId));
+
+      return splitBetween;
+    } catch (error) {
+      console.error({ error });
+      throw error;
+    }
+  }
+
+  async save(
+    expense: NewExpense,
+    splitBetween: string[],
+    groupId: number
+  ): Promise<void> {
     try {
       await db.transaction(
         (tx) => {
@@ -32,6 +70,7 @@ export class SqliteExpenseRepository implements ExpenseRepository {
             insertExpenseParticipantSchema.parse({
               expenseId: insertedId,
               userName,
+              groupId,
             })
           );
 

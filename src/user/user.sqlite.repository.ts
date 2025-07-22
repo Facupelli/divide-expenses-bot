@@ -8,7 +8,9 @@ export class SqliteUserRepository implements UserRepository {
     return null;
   }
 
-  async saveMultiple(userNames: { name: string }[]): Promise<void> {
+  async saveMultiple(
+    userNames: { name: string; groupId: number }[]
+  ): Promise<void> {
     try {
       await db.insert(users).values(userNames);
     } catch (error) {

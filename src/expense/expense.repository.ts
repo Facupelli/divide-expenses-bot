@@ -1,6 +1,11 @@
 import { Expense, NewExpense } from "../db/schema";
 
 export interface ExpenseRepository {
-  getAll(): Promise<Expense[]>;
-  save(expense: NewExpense, splitBetween: string[]): Promise<void>;
+  getSplitBetween(expenseId: number): Promise<{ userName: string }[]>;
+  getAll(chatId: string): Promise<Expense[]>;
+  save(
+    expense: NewExpense,
+    splitBetween: string[],
+    groupId: number
+  ): Promise<void>;
 }
