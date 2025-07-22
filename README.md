@@ -34,5 +34,5 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 
 ## Imágenes
 
-![Demo 1](./images/demo-1.jpg)
-![Demo 1.1](./images/demo-1.1.jpg)
+![Demo 1](./images/demo-1.jpeg)
+![Demo 1.1](./images/demo-1.1.jpeg)
