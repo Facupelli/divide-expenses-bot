@@ -44,7 +44,8 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 
 ## Ideas para implementar y cosas para mejorar
 
- - [ ] Manejar múltiples gastos en un solo mensaje.
+ - [x] Manejar múltiples gastos en un solo mensaje.
+ - [ ] Agregar procesamiento de webhook async
  - [ ] Soportar audio.
  - [ ] Soportar ediciones de gastos.
  - [ ] Formatear la fecha de manera amigable.
