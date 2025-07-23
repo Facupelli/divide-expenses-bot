@@ -55,14 +55,9 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 
 ## Imágenes
 
-<p align="center">
-  <img src="./images/demo-1.jpeg" alt="Demo 1" width="300" height="600"/>
-</p>
-
-<p align="center">
-  <img src="./images/demo-1.1.jpeg" alt="Demo 1.1" width="300" height="600"/>
-</p>
-
-<p align="center">
-  <img src="./images/demo-2.jpeg" alt="Demo 2" width="300" height="600"/>
-</p>
+<div align="center">
+  <img src="./images/demo-1.jpeg" alt="Demo 1" width="300" height="600" style="margin: 10px"/>
+  <img src="./images/demo-1.1.jpeg" alt="Demo 1.1" width="300" height="600" style="margin: 10px"/>
+  <img src="./images/demo-2.jpeg" alt="Demo 2" width="300" height="600" style="margin: 10px"/>
+  <img src="./images/demo-2.2.jpeg" alt="Demo 2.2" width="300" height="600" style="margin: 10px"/>
+</div>

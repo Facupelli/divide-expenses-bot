@@ -19,10 +19,10 @@ import { UserService } from "./domain/user/user.service";
 import { SqliteUserRepository } from "./domain/user/user.sqlite.repository";
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
-const telegramApiKey = process.env.TELEGRAM_API_KEY;
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramWebhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
 
-if (!openaiApiKey || !telegramApiKey || !telegramWebhookUrl) {
+if (!openaiApiKey || !telegramBotToken || !telegramWebhookUrl) {
 	throw new Error("ENV variable missing");
 }
 
@@ -30,7 +30,7 @@ const openaiClient = new OpenAI({ apiKey: openaiApiKey });
 
 // Adapters
 const telegramAdapter = new TelegramChatAdapter({
-	botToken: telegramApiKey,
+	botToken: telegramBotToken,
 	webhookUrl: telegramWebhookUrl,
 });
 const openaiAdapter = new OpenAIAdapter(openaiClient);
