@@ -1,6 +1,7 @@
 import express from "express";
 import { deps } from "../composition";
 import { createTelegramController } from "../controllers/telegram.controller";
+import { apiKeyAuth } from "../middlewares/api-key.middleware";
 import { bodyValidate } from "../middlewares/body-validation.middleware";
 import {
 	setBotNameSchema,
@@ -11,7 +12,7 @@ const router = express.Router();
 
 const telegramController = createTelegramController(deps);
 
-// router.use(protect);
+router.use(apiKeyAuth);
 
 router.post(
 	"/commands",
