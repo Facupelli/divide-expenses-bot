@@ -4,5 +4,5 @@ import { RateLimiterMemory } from "rate-limiter-flexible";
 export const msgLimiter = new RateLimiterMemory({
 	keyPrefix: "tg_msg",
 	points: 8,
-	duration: 1,
+	duration: 10,
 });
