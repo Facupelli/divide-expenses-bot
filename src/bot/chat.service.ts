@@ -9,7 +9,11 @@ export class ChatService {
 	}
 
 	async getWebhookInfo(): Promise<void> {
-		return this.getWebhookInfo();
+		return this.chat.getWebhookInfo();
+	}
+
+	async setWebhook(): Promise<void> {
+		return this.chat.setWebhook();
 	}
 
 	async sendMessage(chatId: number, text: string) {

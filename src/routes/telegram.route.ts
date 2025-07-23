@@ -14,11 +14,14 @@ const telegramController = createTelegramController(deps);
 
 router.use(apiKeyAuth);
 
+router.post("/webhook", telegramController.setWebhook);
+
 router.post(
 	"/commands",
 	bodyValidate(setCommandsSchema),
 	telegramController.setCommands,
 );
+
 router.post(
 	"/bot-name",
 	bodyValidate(setBotNameSchema),

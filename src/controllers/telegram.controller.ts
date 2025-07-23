@@ -5,8 +5,10 @@ import type {
 	SetCommandsBody,
 } from "../validators/telegram.validator";
 
-export function createTelegramController(deps: Pick<Deps, "telegramService">) {
-	const { telegramService } = deps;
+export function createTelegramController(
+	deps: Pick<Deps, "telegramService" | "chatService">,
+) {
+	const { telegramService, chatService } = deps;
 
 	return {
 		async setCommands(req: Request, res: Response) {
@@ -21,6 +23,11 @@ export function createTelegramController(deps: Pick<Deps, "telegramService">) {
 
 			await telegramService.setBotName(body.name);
 			return res.sendStatus(200);
+		},
+
+		async setWebhook(_: Request, res: Response) {
+			await chatService.setWebhook();
+			return res.sendStatus(201);
 		},
 	};
 }
