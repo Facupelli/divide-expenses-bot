@@ -1,12 +1,14 @@
 import express from "express";
-import {
-	getWebhookInfo,
-	handleWebhook,
-} from "../controllers/webhook.controller";
+import { deps } from "../composition";
+import { createWebhookController } from "../controllers/webhook.controller";
 
 const router = express.Router();
 
-router.get("/info", getWebhookInfo);
-router.post("/webhook", handleWebhook);
+const webhookController = createWebhookController(deps);
+
+// router.use(protect);
+
+router.get("/info", webhookController.getWebhookInfo);
+router.post("/webhook", webhookController.handleWebhook);
 
 export default router;
