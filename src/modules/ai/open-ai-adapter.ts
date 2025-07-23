@@ -100,7 +100,10 @@ export class OpenAIAdapter implements AIProvider {
 		augmentedInstructions?: string,
 	): Promise<OpenAI.Responses.Response> {
 		try {
-			let instructions = await fs.readFile("./src/prompt.txt", "utf-8");
+			let instructions = await fs.readFile(
+				"./src/modules/ai/prompt.txt",
+				"utf-8",
+			);
 
 			if (augmentedInstructions != null) {
 				instructions = `${instructions}\n\n${augmentedInstructions}`;

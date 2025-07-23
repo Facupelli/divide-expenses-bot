@@ -20,5 +20,7 @@ RUN npm ci --omit=dev --legacy-peer-deps
 # compiled JS from build stage
 COPY --from=build /app/dist ./dist
 
+COPY --from=build /app/src/modules/ai/prompt.txt ./src/modules/ai/prompt.txt
+
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
