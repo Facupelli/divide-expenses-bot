@@ -1,6 +1,6 @@
 import type { ResponseInput } from "openai/resources/responses/responses.js";
-import type { ChatExpenseService } from "../expense/chat-expense.service";
-import type { ChatUserService } from "../user/chat-user.service";
+import type { ExpensePresenter } from "../expense/expense-presenter";
+import type { UserPresenter } from "../user/user-presenter";
 import type { AIProvider } from "./types";
 
 const history: Record<number, ResponseInput> = {};
@@ -20,8 +20,8 @@ function push(chatId: number, role: "user" | "assistant", text: string) {
 export class AIService {
 	constructor(
 		private ai: AIProvider,
-		private chatUserService: ChatUserService,
-		private chatExpenseService: ChatExpenseService,
+		private userPresenter: UserPresenter,
+		private expensePresenter: ExpensePresenter,
 	) {}
 
 	async createResponse(
@@ -29,7 +29,7 @@ export class AIService {
 		input: string,
 	): Promise<string | string[] | undefined> {
 		let augmentedInstructions: string | undefined;
-		const { message } = await this.chatUserService.getUsers(String(chatId));
+		const { message } = await this.userPresenter.getUsers(String(chatId));
 
 		if (message != null && message.length > 0) {
 			augmentedInstructions = `La lista actual de participantes es: "${message}"`;
@@ -78,16 +78,16 @@ export class AIService {
 
 	private async callFunction(name: string, args: any, chatId: string) {
 		if (name === "get_payouts") {
-			return await this.chatExpenseService.getPayouts(chatId);
+			return await this.expensePresenter.getPayouts(chatId);
 		}
 		if (name === "get_expenses") {
-			return await this.chatExpenseService.getAllExpenses(chatId);
+			return await this.expensePresenter.getAllExpenses(chatId);
 		}
 		if (name === "add_participants") {
-			return await this.chatUserService.addUsers(args.names, chatId);
+			return await this.userPresenter.addUsers(args.names, chatId);
 		}
 		if (name === "add_expense") {
-			return await this.chatExpenseService.addExpenses(args.expenses, chatId);
+			return await this.expensePresenter.addExpenses(args.expenses, chatId);
 		}
 	}
 }

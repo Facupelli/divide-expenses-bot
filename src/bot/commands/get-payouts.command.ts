@@ -1,4 +1,4 @@
-import type { ChatExpenseService } from "../../domain/expense/chat-expense.service";
+import type { ChatExpenseService } from "../../modules/expense/expense-presenter";
 import type { TelegramMessage } from "../types/telegram.type";
 import type { ICommand, ICommandResponse } from "./types";
 

@@ -1,4 +1,8 @@
-import type { GroupService } from "../../domain/group/group.service";
+import type { GroupService } from "../../modules/group/group.service";
+import {
+	createErrorGroupMessage,
+	createSuccessGroupMessage,
+} from "../messages/factories/group.factory";
 import type { TelegramMessage } from "../types/telegram.type";
 import type { ICommand, ICommandResponse } from "./types";
 
@@ -13,15 +17,15 @@ export class ClosegroupCommand implements ICommand {
 		console.log(`COMMAND [cerrar_grupo] triggered by ${msg.from?.first_name}`);
 		try {
 			await this.groupService.close(String(chatId));
+
 			return {
 				success: true,
-				message:
-					"✅ Se cerró el grupo activo. Puedes volver a comenzar creando uno nuevo!",
+				message: createSuccessGroupMessage(),
 			};
-		} catch (error) {
+		} catch (_) {
 			return {
 				success: false,
-				message: "Hubo un error, no se pudo cerrar el grupo",
+				message: createErrorGroupMessage(),
 			};
 		}
 	}

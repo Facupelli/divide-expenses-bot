@@ -58,22 +58,19 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 		expense: NewExpense,
 		splitBetween: string[],
 		groupId: number,
-	): Promise<{ id: number; createdAt: Date }> {
+	): Promise<Expense> {
 		try {
 			return await this.db.transaction(
 				(tx) => {
-					const { insertedId, createdAt } = tx
+					const newExpense = tx
 						.insert(expenses)
 						.values(expense)
-						.returning({
-							insertedId: expenses.id,
-							createdAt: expenses.createdAt,
-						})
+						.returning()
 						.get();
 
 					const participantRecords = splitBetween.map((userName) =>
 						insertExpenseParticipantSchema.parse({
-							expenseId: insertedId,
+							expenseId: newExpense.id,
 							userName,
 							groupId,
 						}),
@@ -81,7 +78,7 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 
 					tx.insert(expenseParticipants).values(participantRecords).run();
 
-					return { id: insertedId, createdAt };
+					return newExpense;
 				},
 				{ behavior: "deferred" },
 			);
