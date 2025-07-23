@@ -12,12 +12,6 @@ export function createWebhookController(
 
 	return {
 		async handleWebhook(req: Request, res: Response) {
-			const isValidWebhook = chatService.validateWebhook(req);
-
-			if (!isValidWebhook) {
-				return res.sendStatus(200);
-			}
-
 			const update: TelegramUpdate = req.body;
 			const message: TelegramMessage | undefined = update.message;
 			// console.dir({ update }, { depth: null });
