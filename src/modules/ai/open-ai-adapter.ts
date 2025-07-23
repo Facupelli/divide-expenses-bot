@@ -117,8 +117,9 @@ export class OpenAIAdapter implements AIProvider {
 			});
 
 			return response;
-		} catch (err) {
-			throw new AIError(`OpenAI failed: ${err}`);
+		} catch (error) {
+			console.error("[OPENAI CREATE_RESPONSE] error:", { error });
+			throw new AIError(`OpenAI failed: ${error}`);
 		}
 	}
 }

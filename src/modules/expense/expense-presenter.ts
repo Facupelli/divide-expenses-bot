@@ -49,7 +49,8 @@ export class ExpensePresenter {
 
 	async getPayouts(chatId: string) {
 		try {
-			const transactions = await this.expenseService.getPayouts(chatId);
+			const { transactions, total, eachShare } =
+				await this.expenseService.getPayouts(chatId);
 
 			const transactionMessages = transactions.map(
 				({ debtor, payerAmount, creditor }) =>
@@ -58,6 +59,9 @@ export class ExpensePresenter {
 
 			const message = [
 				"💸 Ajuste de cuentas",
+				"",
+				`Total: ${formatAmount(total)}`,
+				`Por persona: ${formatAmount(eachShare)}`,
 				"",
 				transactionMessages.map((t) => `- ${t}`).join("\n"),
 			].join("\n");

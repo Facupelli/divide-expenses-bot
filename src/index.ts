@@ -10,7 +10,6 @@ import webhookRouter from "./routes/webhook.route";
 const isProd = process.env.NODE_ENV === "production";
 
 async function runMigrations(): Promise<void> {
-	// Adjust this path based on where your SQLite file should be stored
 	const dbPath = process.env.SQLITE_PATH || "./data/app.db";
 
 	console.log(`Connecting to database at: ${dbPath}`);

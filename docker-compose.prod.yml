@@ -1,8 +1,0 @@
-services:
- api:
-  build:
-   context: .
-   target: production
-
-  ports:
-   - 3000:3000

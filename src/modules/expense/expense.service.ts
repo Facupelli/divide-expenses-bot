@@ -6,7 +6,7 @@ import {
 	NoActiveGroupError,
 } from "./expense.errors";
 import type { SqliteExpenseRepository } from "./expense.sqlite.repository";
-import type { PayoutTransaction } from "./expense.types";
+import type { PayoutsResponse, PayoutTransaction } from "./expense.types";
 
 export class ExpenseService {
 	constructor(
@@ -83,7 +83,7 @@ export class ExpenseService {
 		return results;
 	}
 
-	async getPayouts(chatId: string): Promise<PayoutTransaction[]> {
+	async getPayouts(chatId: string): Promise<PayoutsResponse> {
 		const groupId = await this.groupService.getActive(chatId);
 
 		if (groupId == null) {
@@ -92,6 +92,7 @@ export class ExpenseService {
 
 		const expensesList = await this.getAll(chatId);
 		const usersList = await this.groupService.getUsers(chatId);
+
 		// STEP 1 - get users balances
 		const usersBalance: Record<string, number> = {};
 
@@ -145,7 +146,14 @@ export class ExpenseService {
 			}
 		}
 
-		return transactions;
+		//
+		const total = expensesList.reduce(
+			(acc, expense) => acc + expense.amount,
+			0,
+		);
+		const eachShare = total / usersList.length;
+
+		return { transactions, total, eachShare };
 	}
 
 	private async getSplitBetween(expenseId: number) {

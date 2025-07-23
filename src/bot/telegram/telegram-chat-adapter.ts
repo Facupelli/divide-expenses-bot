@@ -32,7 +32,7 @@ export class TelegramChatAdapter implements ChatProvider {
 			const data = await response.json();
 			console.log({ data });
 		} catch (error) {
-			console.error({ error });
+			console.error("[TELEGRAM SEND_MESSAGE] error:", { error });
 			throw error;
 		}
 	}

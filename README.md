@@ -48,6 +48,7 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
  - [x] Agregar manejo de creación de mensajes para respuestas del bot.
  - [ ] Agregar procesamiento de webhook async.
  - [ ] Soportar audio.
+ - [ ] Soportar agregar o eliminar participantes del grupo.
  - [ ] Soportar ediciones de gastos.
  - [ ] Formatear la fecha de manera amigable.
  - [ ] Ofrecer opción para agrupar la lista de gastos por persona.
