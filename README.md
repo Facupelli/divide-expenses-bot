@@ -45,7 +45,7 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
 ## Ideas para implementar y cosas para mejorar
 
  - [x] Manejar múltiples gastos en un solo mensaje.
- - [ ] Agregar patron de creación de mensajes para respuestas del bot.
+ - [x] Agregar manejo de creación de mensajes para respuestas del bot.
  - [ ] Agregar procesamiento de webhook async.
  - [ ] Soportar audio.
  - [ ] Soportar ediciones de gastos.
