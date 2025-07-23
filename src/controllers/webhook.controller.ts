@@ -4,6 +4,7 @@ import type {
 	TelegramUpdate,
 } from "../bot/types/telegram.type";
 import type { Deps } from "../composition";
+import { msgLimiter } from "../infra/rate-limiter";
 
 export function createWebhookController(
 	deps: Pick<Deps, "commandRegistry" | "aiService" | "chatService">,
@@ -23,6 +24,17 @@ export function createWebhookController(
 			const entities = message.entities;
 			const text = message.text;
 			const chatId = message.chat.id;
+
+			// RATE LIMITING
+			try {
+				await msgLimiter.consume(chatId.toString());
+			} catch (_) {
+				await chatService.sendMessage(
+					chatId,
+					"⏳ Por favor esepera unos segundos antes de enviar otro mensaje.",
+				);
+				return res.sendStatus(200);
+			}
 
 			if (text == null) {
 				return res.sendStatus(200);

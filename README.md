@@ -53,6 +53,7 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
  - [ ] Formatear la fecha de manera amigable.
  - [ ] Ofrecer opción para agrupar la lista de gastos por persona.
  - [ ] Hacer a prueba de balas, testear contra inputs "malditos".
+ - [ ] Si estoy en un viaje sin internet y quiero registrar gastos?.
 
 ---
 
