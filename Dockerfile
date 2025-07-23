@@ -2,13 +2,14 @@
 FROM node:20-alpine AS build
 
 WORKDIR /app
-COPY package*.json .
-RUN npm install
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps   # <-- add here too
 COPY . .
 RUN npm run build
 
 #Production stage
 FROM node:20-alpine AS production
+
 ENV NODE_ENV=production
 WORKDIR /app
 
