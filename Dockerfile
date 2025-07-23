@@ -26,11 +26,11 @@ COPY --from=build /app/dist ./dist
 # Copy your prompt file
 COPY --from=build /app/src/modules/ai/prompt.txt ./src/modules/ai/prompt.txt
 
-# Copy migration files - adjust this path based on your Drizzle setup
-# Common locations are: ./migrations, ./drizzle, ./src/db/migrations
-COPY --from=build /app/migrations ./src/db/migrations
+# Copy migration files from the correct location
+COPY --from=build /app/src/db/migrations ./src/db/migrations
 
 ENV DATABASE_PATH=/app/data/app.db
+ENV SQLITE_PATH=/app/data/app.db
 
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

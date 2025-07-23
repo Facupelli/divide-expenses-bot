@@ -11,7 +11,7 @@ const isProd = process.env.NODE_ENV === "production";
 
 async function runMigrations(): Promise<void> {
 	// Adjust this path based on where your SQLite file should be stored
-	const dbPath = isProd ? process.env.SQLITE_PATH : "database.db";
+	const dbPath = process.env.SQLITE_PATH || "./data/app.db";
 
 	console.log(`Connecting to database at: ${dbPath}`);
 	const sqlite = new Database(dbPath);
@@ -20,9 +20,7 @@ async function runMigrations(): Promise<void> {
 	try {
 		console.log("Running database migrations...");
 
-		// Adjust the migrations folder path based on your setup
-		// This assumes your migrations are in a 'migrations' folder after build
-		await migrate(db, { migrationsFolder: "./migrations" });
+		await migrate(db, { migrationsFolder: "./src/db/migrations" });
 
 		console.log("✅ Migrations completed successfully");
 	} catch (error) {
