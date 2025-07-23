@@ -16,17 +16,13 @@ FROM node:20-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /app
 
-# copy lock file too, then install only prod deps
 COPY package*.json ./
-RUN npm ci --omit=dev --legacy-peer-deps && \
-    npm install drizzle-kit --no-save  
+COPY --from=build /app/src ./src
 
-# compiled JS from build stage
+RUN npm ci --legacy-peer-deps
+
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/src/modules/ai/prompt.txt ./src/modules/ai/prompt.txt
-
-# to have drizzle schema and config
-COPY --from=build /app/src /app/src
 
 # startup script
 COPY start.sh /app/start.sh
