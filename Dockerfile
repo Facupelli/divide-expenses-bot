@@ -7,26 +7,30 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-# generate migrations so they exist in the image
-RUN npx drizzle-kit generate --config=./src/drizzle.config.ts
-
 #Production stage
 FROM node:20-alpine AS production
 
 ENV NODE_ENV=production
 WORKDIR /app
 
+# Create data directory for SQLite database
+RUN mkdir -p /app/data
+
+# Copy package files and install only production dependencies
 COPY package*.json ./
-COPY --from=build /app/src ./src
+RUN npm ci --omit=dev --legacy-peer-deps
 
-RUN npm ci
-
+# Copy compiled JavaScript from build stage
 COPY --from=build /app/dist ./dist
+
+# Copy your prompt file
 COPY --from=build /app/src/modules/ai/prompt.txt ./src/modules/ai/prompt.txt
 
-# startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Copy migration files - adjust this path based on your Drizzle setup
+# Common locations are: ./migrations, ./drizzle, ./src/db/migrations
+COPY --from=build /app/migrations ./src/db/migrations
+
+ENV DATABASE_PATH=/app/data/app.db
 
 EXPOSE 3000
-CMD ["/app/start.sh"]
+CMD ["node", "dist/index.js"]

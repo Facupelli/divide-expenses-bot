@@ -1,18 +1,75 @@
 import "dotenv/config";
+import Database from "better-sqlite3";
 import cors from "cors";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import express from "express";
 import telegramRouter from "./routes/telegram.route";
 import webhookRouter from "./routes/webhook.route";
 
-const app = express();
-const PORT = 3000;
+const isProd = process.env.NODE_ENV === "production";
 
-app.use(cors());
-app.use(express.json());
+async function runMigrations(): Promise<void> {
+	// Adjust this path based on where your SQLite file should be stored
+	const dbPath = isProd ? process.env.SQLITE_PATH : "database.db";
 
-app.use("/", webhookRouter);
-app.use("/telegram", telegramRouter);
+	console.log(`Connecting to database at: ${dbPath}`);
+	const sqlite = new Database(dbPath);
+	const db = drizzle(sqlite);
 
-app.listen(PORT, () => {
-	console.log(`Server running on port: ${PORT}`);
+	try {
+		console.log("Running database migrations...");
+
+		// Adjust the migrations folder path based on your setup
+		// This assumes your migrations are in a 'migrations' folder after build
+		await migrate(db, { migrationsFolder: "./migrations" });
+
+		console.log("✅ Migrations completed successfully");
+	} catch (error) {
+		console.error("❌ Migration failed:", error);
+		process.exit(1);
+	} finally {
+		sqlite.close();
+	}
+}
+
+async function startServer(): Promise<void> {
+	try {
+		if (isProd) {
+			await runMigrations();
+		}
+
+		const app = express();
+		const PORT = process.env.PORT || 3000;
+
+		// Middleware
+		app.use(cors());
+		app.use(express.json());
+
+		// Routes
+		app.use("/", webhookRouter);
+		app.use("/telegram", telegramRouter);
+
+		// Health check endpoint (useful for deployment platforms)
+		app.get("/health", (_, res) => {
+			res
+				.status(200)
+				.json({ status: "healthy", timestamp: new Date().toISOString() });
+		});
+
+		app.listen(PORT, () => {
+			console.log(`🚀 Server running on port: ${PORT}`);
+			console.log(
+				`📊 Health check available at: http://localhost:${PORT}/health`,
+			);
+		});
+	} catch (error) {
+		console.error("❌ Failed to start server:", error);
+		process.exit(1);
+	}
+}
+
+startServer().catch((error) => {
+	console.error("💥 Unhandled error during startup:", error);
+	process.exit(1);
 });
