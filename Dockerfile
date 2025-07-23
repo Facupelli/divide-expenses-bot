@@ -8,7 +8,7 @@ COPY . .
 RUN npm run build
 
 # generate migrations so they exist in the image
-RUN npx drizzle-kit generate
+RUN npx drizzle-kit generate --config=./src/drizzle.config.ts
 
 #Production stage
 FROM node:20-alpine AS production
