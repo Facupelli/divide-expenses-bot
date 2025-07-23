@@ -3,7 +3,7 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps   # <-- add here too
+RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
@@ -15,7 +15,7 @@ WORKDIR /app
 
 # copy lock file too, then install only prod deps
 COPY package*.json ./
-RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # compiled JS from build stage
 COPY --from=build /app/dist ./dist
