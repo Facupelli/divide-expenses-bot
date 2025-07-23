@@ -8,9 +8,11 @@ const router = express.Router();
 const webhookValidator = createWebhookValidator(deps);
 const webhookController = createWebhookController(deps);
 
-router.use(webhookValidator.validateWebhookSign);
-
 router.get("/info", webhookController.getWebhookInfo);
-router.post("/webhook", webhookController.handleWebhook);
+router.post(
+	"/webhook",
+	webhookValidator.validateWebhookSign,
+	webhookController.handleWebhook,
+);
 
 export default router;
