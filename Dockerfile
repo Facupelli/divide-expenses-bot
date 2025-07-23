@@ -19,7 +19,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY --from=build /app/src ./src
 
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/src/modules/ai/prompt.txt ./src/modules/ai/prompt.txt
