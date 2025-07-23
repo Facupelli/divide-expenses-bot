@@ -1,4 +1,3 @@
-import type { NewExpense } from "../../db/schema";
 import type { GroupService } from "../group/group.service";
 import type { ExpenseService } from "./expense.service";
 import { formatAmount } from "./price.helper";
@@ -28,7 +27,7 @@ export class ChatExpenseService {
 				success: true,
 				message,
 			};
-		} catch (error) {
+		} catch (_) {
 			return {
 				success: false,
 				message: "Hubo un error obteniendo los gastos.",
@@ -36,9 +35,13 @@ export class ChatExpenseService {
 		}
 	}
 
-	async addExpense(
-		newExpense: Omit<NewExpense, "groupId">,
-		splitBetween: string[],
+	async addExpenses(
+		expenses: Array<{
+			payer: string;
+			amount: number;
+			description: string;
+			splitBetween: string[];
+		}>,
 		chatId: string,
 	) {
 		const groupId = await this.groupService.getActive(chatId);
@@ -51,35 +54,71 @@ export class ChatExpenseService {
 			};
 		}
 
-		const isUserValid = await this.groupService.checkUserIsInGroup(
-			newExpense.payer,
-			chatId,
-		);
+		// Validate all payers are in the group
+		const invalidPayers = [];
+		for (const expense of expenses) {
+			const isUserValid = await this.groupService.checkUserIsInGroup(
+				expense.payer,
+				chatId,
+			);
+			if (!isUserValid) {
+				invalidPayers.push(expense.payer);
+			}
+		}
 
-		if (!isUserValid) {
+		if (invalidPayers.length > 0) {
+			const payerList = invalidPayers.join(", ");
 			return {
 				success: false,
-				message:
-					"❌ La persona que pagó no está presente entre los participantes del grupo.",
+				message: `❌ Las siguientes personas no están en el grupo: ${payerList}`,
 			};
 		}
 
 		try {
-			const { createdAt } = await this.expenseService.save(
-				newExpense,
-				splitBetween,
-				groupId,
+			// Process all expenses
+			const results = [];
+			for (const expense of expenses) {
+				const newExpense = {
+					payer: expense.payer,
+					amount: expense.amount,
+					description: expense.description,
+				};
+
+				const { createdAt } = await this.expenseService.save(
+					newExpense,
+					expense.splitBetween,
+					groupId,
+				);
+
+				results.push({
+					...newExpense,
+					splitBetween: expense.splitBetween,
+					createdAt,
+				});
+			}
+
+			if (results.length === 1) {
+				const expense = results[0];
+				const message = [
+					"✅ Gasto registrado",
+					`👤 ${expense.payer} pagó 💰 ${formatAmount(expense.amount)}`,
+					`📝 por: ${expense.description}`,
+					`🕒 ${expense.createdAt.toISOString()}`,
+				].join("\n");
+
+				return { success: true, message };
+			}
+
+			const header = `✅ ${results.length} gastos registrados:\n`;
+			const expenseLines = results.map(
+				(expense, index) =>
+					`${index + 1}. ${expense.payer} - 💰 ${formatAmount(expense.amount)} - ${expense.description}`,
 			);
 
-			const message = [
-				"✅ Gasto registrado",
-				`👤 ${newExpense.payer} pagó 💰 ${formatAmount(newExpense.amount)}`,
-				`📝 por: ${newExpense.description}`,
-				`🕒 ${createdAt.toISOString()}`,
-			].join("\n");
+			const message = header + expenseLines.join("\n");
 
 			return { success: true, message };
-		} catch (error) {
+		} catch (_) {
 			return {
 				success: false,
 				message:
@@ -174,7 +213,7 @@ export class ChatExpenseService {
 				message,
 			};
 		} catch (error) {
-			console.error("GET_PAYMENTS ERROR:", { error });
+			console.error("GET_PAYOUTS ERROR:", { error });
 			return { success: false, message: "Hubo un error" };
 		}
 	}

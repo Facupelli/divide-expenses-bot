@@ -24,7 +24,10 @@ export class AIService {
 		private chatExpenseService: ChatExpenseService,
 	) {}
 
-	async createResponse(chatId: number, input: string) {
+	async createResponse(
+		chatId: number,
+		input: string,
+	): Promise<string | string[] | undefined> {
 		let augmentedInstructions: string | undefined;
 		const { message } = await this.chatUserService.getUsers(String(chatId));
 
@@ -44,9 +47,12 @@ export class AIService {
 
 		if (response.output_text) {
 			push(chatId, "assistant", response.output_text);
+			return response.output_text;
 		}
 
 		console.log("TOOLCALL", response.output);
+
+		const toolMessages: string[] = [];
 
 		for (const toolCall of response.output) {
 			if (toolCall.type !== "function_call") {
@@ -61,33 +67,27 @@ export class AIService {
 
 			if (result) {
 				history[chatId] = [];
-				return result.message;
+				toolMessages.push(result.message);
 			}
 		}
 
-		return response.output_text;
+		if (toolMessages.length > 0) {
+			return toolMessages;
+		}
 	}
 
 	private async callFunction(name: string, args: any, chatId: string) {
-		if (name === "get_payments") {
+		if (name === "get_payouts") {
 			return await this.chatExpenseService.getPayouts(chatId);
 		}
 		if (name === "get_expenses") {
 			return await this.chatExpenseService.getAllExpenses(chatId);
 		}
-		if (name === "add_users") {
+		if (name === "add_participants") {
 			return await this.chatUserService.addUsers(args.names, chatId);
 		}
 		if (name === "add_expense") {
-			return await this.chatExpenseService.addExpense(
-				{
-					payer: args.payer,
-					amount: args.amount,
-					description: args.description,
-				},
-				args.splitBetween,
-				chatId,
-			);
+			return await this.chatExpenseService.addExpenses(args.expenses, chatId);
 		}
 	}
 }

@@ -17,7 +17,7 @@ const tools: Tool[] = [
 	},
 	{
 		type: "function",
-		name: "get_payments",
+		name: "get_payouts",
 		description:
 			"Obtiene la lista de transacciones que se deben realizar para ajustar las cuentas entre todos los participantes del grupo. Ajuste de cuentas.",
 		parameters: null,
@@ -25,7 +25,7 @@ const tools: Tool[] = [
 	},
 	{
 		type: "function",
-		name: "add_users",
+		name: "add_participants",
 		description:
 			"Agrega al grupo la lista completa de personas que participarán en los gastos.",
 		parameters: {
@@ -46,33 +46,46 @@ const tools: Tool[] = [
 		type: "function",
 		name: "add_expense",
 		description:
-			"Registra un nuevo gasto en la base de datos cuando se tiene toda la información requerida.",
+			"Registra uno o múltiples gastos en la base de datos cuando se tiene toda la información requerida.",
 		parameters: {
 			type: "object",
 			properties: {
-				payer: {
-					type: "string",
-					description: "Nombre de la persona que pagó el gasto",
-				},
-				amount: {
-					type: "number",
-					description: "Monto del gasto en números (sin símbolos de moneda)",
-				},
-				description: {
-					type: "string",
-					description:
-						"Concepto o descripción del gasto (ej: cena, gasolina, snacks)",
-				},
-				splitBetween: {
+				expenses: {
 					type: "array",
+					description: "Lista de gastos a registrar",
 					items: {
-						type: "string",
+						type: "object",
+						properties: {
+							payer: {
+								type: "string",
+								description: "Nombre de la persona que pagó el gasto",
+							},
+							amount: {
+								type: "number",
+								description:
+									"Monto del gasto en números (sin símbolos de moneda)",
+							},
+							description: {
+								type: "string",
+								description:
+									"Concepto o descripción del gasto (ej: cena, gasolina, snacks)",
+							},
+							splitBetween: {
+								type: "array",
+								items: {
+									type: "string",
+								},
+								description:
+									"Lista de nombres de las personas entre las que se debe dividir un gasto",
+							},
+						},
+						required: ["payer", "amount", "description", "splitBetween"],
+						additionalProperties: false,
 					},
-					description:
-						"Lista de nombres de las personas entre las que se debe dividir un gasto",
+					minItems: 1,
 				},
 			},
-			required: ["payer", "amount", "description", "splitBetween"],
+			required: ["expenses"],
 			additionalProperties: false,
 		},
 		strict: true,

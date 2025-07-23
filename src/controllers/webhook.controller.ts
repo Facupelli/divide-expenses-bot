@@ -46,7 +46,16 @@ export function createWebhookController(
 			}
 
 			const response = await aiService.createResponse(chatId, text);
-			if (response != null) {
+
+			if (response == null) {
+				return res.sendStatus(200);
+			}
+
+			if (Array.isArray(response)) {
+				for (const r of response) {
+					await chatService.sendMessage(chatId, r);
+				}
+			} else {
 				await chatService.sendMessage(chatId, response);
 			}
 
