@@ -1,9 +1,9 @@
-import type { ChatExpenseService } from "../../modules/expense/expense-presenter";
+import type { ExpensePresenter } from "../../modules/expense/expense-presenter";
 import type { TelegramMessage } from "../types/telegram.type";
 import type { ICommand, ICommandResponse } from "./types";
 
 export class GetPayoutCommand implements ICommand {
-	constructor(private chatExpenseService: ChatExpenseService) {}
+	constructor(private chatExpenseService: ExpensePresenter) {}
 
 	readonly name = "ajuste_cuentas";
 	async execute(

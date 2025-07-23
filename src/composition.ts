@@ -52,7 +52,7 @@ const expensePresenter = new ExpensePresenter(expenseService);
 
 const commandRegistry = new CommandRegistry()
 	.register(new ClosegroupCommand(groupService))
-	.register(new GetPayoutCommand(userPresenter))
+	.register(new GetPayoutCommand(expensePresenter))
 	.register(new GetExpensesCommand(expensePresenter));
 
 const telegramService = new TelegramService(telegramAdapter);

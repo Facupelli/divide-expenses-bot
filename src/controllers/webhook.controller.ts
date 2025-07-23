@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import type {
 	TelegramMessage,
 	TelegramUpdate,
-} from "../chat/types/telegram.type";
+} from "../bot/types/telegram.type";
 import type { Deps } from "../composition";
 
 export function createWebhookController(
