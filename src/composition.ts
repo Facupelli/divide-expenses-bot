@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import { ChatService } from "./chat/chat.service";
 import { ClosegroupCommand } from "./chat/commands/close-group.command";
 import { CommandRegistry } from "./chat/commands/command-registry";
@@ -5,6 +6,7 @@ import { GetExpensesCommand } from "./chat/commands/get-expenses.command copy";
 import { GetPayoutCommand } from "./chat/commands/get-payouts.command";
 import { TelegramService } from "./chat/telegram/telegram.service";
 import { TelegramChatAdapter } from "./chat/telegram/telegram-chat-adapter";
+import { db } from "./db";
 import { AIService } from "./domain/ai/ai.service";
 import { OpenAIAdapter } from "./domain/ai/open-ai-adapter";
 import { ChatExpenseService } from "./domain/expense/chat-expense.service";
@@ -16,14 +18,27 @@ import { ChatUserService } from "./domain/user/chat-user.service";
 import { UserService } from "./domain/user/user.service";
 import { SqliteUserRepository } from "./domain/user/user.sqlite.repository";
 
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const telegramApiKey = process.env.TELEGRAM_API_KEY;
+const telegramWebhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+
+if (!openaiApiKey || !telegramApiKey || !telegramWebhookUrl) {
+	throw new Error("ENV variable missing");
+}
+
+const openaiClient = new OpenAI({ apiKey: openaiApiKey });
+
 // Adapters
-const telegramAdapter = new TelegramChatAdapter();
-const openaiAdapter = new OpenAIAdapter();
+const telegramAdapter = new TelegramChatAdapter({
+	botToken: telegramApiKey,
+	webhookUrl: telegramWebhookUrl,
+});
+const openaiAdapter = new OpenAIAdapter(openaiClient);
 
 // Repositories
-const userRepository = new SqliteUserRepository();
-const expenseRepository = new SqliteExpenseRepository();
-const groupRepository = new SqliteGroupRepository();
+const userRepository = new SqliteUserRepository(db);
+const expenseRepository = new SqliteExpenseRepository(db);
+const groupRepository = new SqliteGroupRepository(db);
 
 // General Services
 const expenseService = new ExpenseService(expenseRepository);

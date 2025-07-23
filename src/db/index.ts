@@ -13,6 +13,8 @@ sqlite.pragma("journal_mode = WAL");
 
 export const db = drizzle(sqlite, { schema });
 
+export type DB = ReturnType<typeof drizzle<typeof schema>>;
+
 process.on("SIGINT", () => {
 	sqlite.close();
 	process.exit(0);

@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { OpenAI } from "openai";
+import type { OpenAI } from "openai";
 import type {
 	ResponseInput,
 	Tool,
@@ -80,17 +80,7 @@ const tools: Tool[] = [
 ];
 
 export class OpenAIAdapter implements AIProvider {
-	private openai: OpenAI;
-
-	constructor() {
-		const apiKey = process.env.OPENAI_API_KEY;
-
-		if (!apiKey) {
-			throw new Error("ENV variable missing");
-		}
-
-		this.openai = new OpenAI({ apiKey });
-	}
+	constructor(private readonly openai: OpenAI) {}
 
 	async createResponse(
 		inputArray: ResponseInput,

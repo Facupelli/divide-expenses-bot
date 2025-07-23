@@ -1,5 +1,5 @@
 import { and, eq, exists } from "drizzle-orm";
-import { db } from "../../db";
+import type { DB } from "../../db";
 import {
 	type Expense,
 	expenseParticipants,
@@ -11,14 +11,16 @@ import {
 import type { ExpenseRepository } from "./expense.repository";
 
 export class SqliteExpenseRepository implements ExpenseRepository {
+	constructor(private readonly db: DB) {}
+
 	async getAll(chatId: string): Promise<Expense[]> {
 		try {
-			const groupExpenses = await db
+			const groupExpenses = await this.db
 				.select()
 				.from(expenses)
 				.where(
 					exists(
-						db
+						this.db
 							.select()
 							.from(groups)
 							.where(
@@ -40,7 +42,7 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 
 	async getSplitBetween(expenseId: number): Promise<{ userName: string }[]> {
 		try {
-			const splitBetween = await db
+			const splitBetween = await this.db
 				.select({ userName: expenseParticipants.userName })
 				.from(expenseParticipants)
 				.where(eq(expenseParticipants.expenseId, expenseId));
@@ -58,7 +60,7 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 		groupId: number,
 	): Promise<{ id: number; createdAt: Date }> {
 		try {
-			return await db.transaction(
+			return await this.db.transaction(
 				(tx) => {
 					const { insertedId, createdAt } = tx
 						.insert(expenses)
