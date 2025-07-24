@@ -7,9 +7,9 @@ import type { Deps } from "../composition";
 import { msgLimiter } from "../infra/rate-limiter";
 
 export function createWebhookController(
-	deps: Pick<Deps, "commandRegistry" | "aiService" | "chatService">,
+	deps: Pick<Deps, "webhookService" | "chatService">,
 ) {
-	const { aiService, chatService, commandRegistry } = deps;
+	const { webhookService, chatService } = deps;
 
 	return {
 		async handleWebhook(req: Request, res: Response) {
@@ -21,8 +21,6 @@ export function createWebhookController(
 				return res.sendStatus(200);
 			}
 
-			const entities = message.entities;
-			const text = message.text;
 			const chatId = message.chat.id;
 
 			// RATE LIMITING
@@ -33,39 +31,12 @@ export function createWebhookController(
 					chatId,
 					"⏳ Por favor esepera unos segundos antes de enviar otro mensaje.",
 				);
-				return res.sendStatus(200);
 			}
 
-			if (text == null) {
-				return res.sendStatus(200);
-			}
-
-			const cmdEntity = entities?.find((e) => e.type === "bot_command");
-
-			if (cmdEntity != null && text != null) {
-				const command = commandRegistry.get(text);
-				if (command) {
-					const commandResult = await command.execute(chatId, message);
-					await chatService.sendMessage(chatId, commandResult.message);
-					return res.sendStatus(200);
-				}
-			}
-
-			const response = await aiService.createResponse(chatId, text);
-
-			if (response == null) {
-				return res.sendStatus(200);
-			}
-
-			if (Array.isArray(response)) {
-				for (const r of response) {
-					await chatService.sendMessage(chatId, r);
-				}
-			} else {
-				await chatService.sendMessage(chatId, response);
-			}
-
-			return res.sendStatus(200);
+			res.sendStatus(200);
+			setImmediate(async () => {
+				await webhookService.handleMessage(message);
+			});
 		},
 
 		async getWebhookInfo(_: Request, res: Response) {

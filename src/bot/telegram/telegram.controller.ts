@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { Deps } from "../composition";
+import type { Deps } from "../../composition";
 import type { SetBotNameBody, SetCommandsBody } from "./telegram.validator";
 
 export function createTelegramController(

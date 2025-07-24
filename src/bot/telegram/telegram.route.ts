@@ -1,7 +1,7 @@
 import express from "express";
-import { deps } from "../composition";
-import { apiKeyAuth } from "../middlewares/api-key.middleware";
-import { bodyValidate } from "../middlewares/body-validation.middleware";
+import { deps } from "../../composition";
+import { apiKeyAuth } from "../../middlewares/api-key.middleware";
+import { bodyValidate } from "../../middlewares/body-validation.middleware";
 import { createTelegramController } from "./telegram.controller";
 import { setBotNameSchema, setCommandsSchema } from "./telegram.validator";
 

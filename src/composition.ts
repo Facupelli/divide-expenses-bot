@@ -17,6 +17,7 @@ import { SqliteGroupRepository } from "./modules/group/group.sqlite.repository";
 import { UserService } from "./modules/user/user.service";
 import { SqliteUserRepository } from "./modules/user/user.sqlite.repository";
 import { UserPresenter } from "./modules/user/user-presenter";
+import { WebhookService } from "./webhook/webhook.service";
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -55,9 +56,14 @@ const commandRegistry = new CommandRegistry()
 	.register(new GetPayoutCommand(expensePresenter))
 	.register(new GetExpensesCommand(expensePresenter));
 
-const telegramService = new TelegramService(telegramAdapter);
-
 const aiService = new AIService(openaiAdapter, userPresenter, expensePresenter);
+
+const telegramService = new TelegramService(telegramAdapter);
+const webhookService = new WebhookService(
+	aiService,
+	commandRegistry,
+	chatService,
+);
 
 export const deps = {
 	aiService,
@@ -74,6 +80,7 @@ export const deps = {
 	userPresenter,
 	userRepository,
 	userService,
+	webhookService,
 } as const;
 
 export type Deps = typeof deps;

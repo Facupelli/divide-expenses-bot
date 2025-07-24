@@ -4,7 +4,7 @@ import cors from "cors";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import express from "express";
-import telegramRouter from "./bot/telegram.route";
+import telegramRouter from "./bot/telegram/telegram.route";
 import webhookRouter from "./webhook/webhook.route";
 
 const isProd = process.env.NODE_ENV === "production";
