@@ -1,7 +1,7 @@
 import express from "express";
 import { deps } from "../composition";
-import { createWebhookController } from "../controllers/webhook.controller";
 import { createWebhookValidator } from "../middlewares/validate-webhook.middleware";
+import { createWebhookController } from "./webhook.controller";
 
 const router = express.Router();
 

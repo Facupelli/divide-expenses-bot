@@ -1,9 +1,6 @@
 import type { Request, Response } from "express";
 import type { Deps } from "../composition";
-import type {
-	SetBotNameBody,
-	SetCommandsBody,
-} from "../validators/telegram.validator";
+import type { SetBotNameBody, SetCommandsBody } from "./telegram.validator";
 
 export function createTelegramController(
 	deps: Pick<Deps, "telegramService" | "chatService">,
