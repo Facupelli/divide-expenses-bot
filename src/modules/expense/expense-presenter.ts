@@ -3,8 +3,8 @@ import {
 	createListExpensesMessage,
 	createSuccessExpenseMessage,
 } from "../../bot/messages/factories/expense.factory";
+import { formatAmount } from "./expense.helpers";
 import type { ExpenseService } from "./expense.service";
-import { formatAmount } from "./price.helper";
 
 export class ExpensePresenter {
 	constructor(private expenseService: ExpenseService) {}

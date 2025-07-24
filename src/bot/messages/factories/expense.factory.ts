@@ -4,7 +4,10 @@ import {
 	InvalidPayersError,
 	NoActiveGroupError,
 } from "../../../modules/expense/expense.errors";
-import { formatAmount } from "../../../modules/expense/price.helper";
+import {
+	formatAmount,
+	formatTimestamp,
+} from "../../../modules/expense/expense.helpers";
 
 export function createListExpensesMessage(expenses: Expense[]): string {
 	return [
@@ -13,9 +16,9 @@ export function createListExpensesMessage(expenses: Expense[]): string {
 		expenses
 			.map((expense) => {
 				const date = expense.createdAt.toISOString();
-				return `- ${expense.payer} pagó 💰 ${formatAmount(expense.amount)} por ${expense.description} ${date}`;
+				return `- ${expense.payer} pagó 💰 ${formatAmount(expense.amount)} por ${expense.description}\n${formatTimestamp(date)}`;
 			})
-			.join("\n"),
+			.join("\n\n"),
 	].join("\n");
 }
 

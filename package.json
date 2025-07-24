@@ -18,6 +18,7 @@
     "@types/cors": "^2.8.19",
     "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
     "dotenv": "^17.2.0",
     "drizzle-orm": "^0.44.3",
     "drizzle-zod": "^0.8.2",
