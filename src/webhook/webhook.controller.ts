@@ -5,16 +5,16 @@ import type {
 } from "../bot/types/telegram.type";
 import type { Deps } from "../composition";
 import { msgLimiter } from "../infra/rate-limiter";
+import { telegramQueue } from "./queue/telegram-queue";
 
-export function createWebhookController(
-	deps: Pick<Deps, "webhookService" | "chatService">,
-) {
-	const { webhookService, chatService } = deps;
+export function createWebhookController(deps: Pick<Deps, "chatService">) {
+	const { chatService } = deps;
 
 	return {
 		async handleWebhook(req: Request, res: Response) {
 			const update: TelegramUpdate = req.body;
 			const message: TelegramMessage | undefined = update.message;
+
 			// console.dir({ update }, { depth: null });
 
 			if (message == null) {
@@ -33,10 +33,22 @@ export function createWebhookController(
 				);
 			}
 
-			res.sendStatus(200);
-			setImmediate(async () => {
-				await webhookService.handleMessage(message);
-			});
+			try {
+				await telegramQueue.add(
+					"telegram-message",
+					{ chatId, payload: message },
+					{
+						attempts: 3,
+						backoff: { type: "exponential", delay: 2000 },
+						removeOnComplete: { age: 60 * 60 },
+						removeOnFail: { age: 24 * 60 * 60 },
+					},
+				);
+			} catch (error) {
+				console.log("[HANDLE-WEBHOOK] add to telegram-queue ERROR", { error });
+			}
+
+			return res.sendStatus(200);
 		},
 
 		async getWebhookInfo(_: Request, res: Response) {

@@ -47,14 +47,16 @@ La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz d
  - [x] Manejar múltiples gastos en un solo mensaje.
  - [x] Agregar manejo de creación de mensajes para respuestas del bot.
  - [x] Formatear la fecha de manera amigable.
+ - [x] Agregar procesamiento de webhook async (con setImmediate por ahora).
+ - [x] Si estoy en un viaje sin internet y quiero registrar gastos? 
+         * Solucionado con bullmq pero con un solo worker con concurrency=1. Pierdo concurrencia de mensajes de distintos chats, pero de momento nadie usa el bot y prefiero soportar el manejo secuencial de mensajes en un mismo chat.
+ - [ ] Manejar concurrencia entre mensajes de múltiples chats
  - [ ] Agregar confirmación al comando de cerrar grupo.
- - [ ] Agregar procesamiento de webhook async.
  - [ ] Soportar audio.
  - [ ] Soportar agregar o eliminar participantes del grupo.
  - [ ] Soportar ediciones de gastos.
  - [ ] Ofrecer opción para agrupar la lista de gastos por persona.
  - [ ] Hacer a prueba de balas, testear contra inputs "malditos".
- - [ ] Si estoy en un viaje sin internet y quiero registrar gastos?.
 
 ---
 

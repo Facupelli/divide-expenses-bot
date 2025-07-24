@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./webhook/queue/telegram-worker";
 import Database from "better-sqlite3";
 import cors from "cors";
 import { drizzle } from "drizzle-orm/better-sqlite3";
