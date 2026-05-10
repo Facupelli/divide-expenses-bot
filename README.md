@@ -1,71 +1,80 @@
-# 🤖 Bot de Gestión de Gastos Grupales
+# Divide Expenses Bot
 
-Este bot te ayuda a manejar gastos compartidos entre un grupo de personas. Recibe mensajes en lenguaje natural (vía Telegram u otra interfaz) y registra quién pagó, cuánto, por qué y entre quiénes se reparte.
+AI-assisted Telegram bot for tracking and splitting shared expenses from natural-language messages.
 
-Ideal para juntadas, viajes o cualquier situación donde haya que dividir gastos.
+The bot lets a group record expenses conversationally, understand who paid, how much, what it was for, and how the cost should be split. It is useful for trips, meetups, dinners, or any situation where a group needs to keep track of shared spending without using spreadsheets.
 
----
+## Overview
 
-# Repo en progreso
+Instead of filling out forms, users can send messages like:
 
----
+> Martín paid 5000 for beers
 
-## 🚀 ¿Qué hace?
+The bot interprets the message, extracts the relevant information, confirms the expense, stores it, and keeps track of what each person paid.
 
-- Forma un grupo de personas entre los que se repartirán los gastos.
-- Interpreta mensajes como:
-  > "Martín gastó 5000 en birras"
-- Confirma cada gasto con detalle.
-- Divide el monto automáticamente (entre todos, o según se indique).
-- Lleva un historial de lo que se pagó y quién puso cuánto.
+It can also calculate the final settlement so the group knows who should pay whom to balance everything out.
 
----
+## Features
 
-## ⚙️ Tecnologías
+- Create a group of participants.
+- Register expenses from natural-language messages.
+- Detect payer, amount, description, and split participants.
+- Handle multiple expenses in a single message.
+- Confirm parsed expenses before saving them.
+- Show the full expense history.
+- Calculate settlement payments between group members.
+- Close a group and start a new one.
+- Persist data using SQLite.
+- Process Telegram messages asynchronously.
 
-- **Backend:** [Express](https://expressjs.com/) + [TypeScript](https://www.typescriptlang.org/)
-- **Base de datos:** [SQLite](https://www.sqlite.org/)
-- **IA (actual):** [OpenAI GPT](https://openai.com/)
-- **UI (actual):** [Telegram Bot API](https://core.telegram.org/bots/api)
+## Tech Stack
 
-La idea es que puedas cambiar fácilmente tanto la capa de IA como la interfaz de mensajería.
+- **Language:** TypeScript
+- **Backend:** Express
+- **Database:** SQLite
+- **Messaging interface:** Telegram Bot API
+- **AI:** OpenAI GPT with function calling
+- **Queue / async processing:** BullMQ
 
----
+## Technical Notes
 
-## Funciones
+The project is designed so the AI layer and the messaging interface can be replaced independently. Telegram is currently used as the main interface, but the core expense-management logic is separated from the transport layer.
 
- - Crear un grupo de personas para compartir gastos (IA function_calling)
- - Agregar un gasto con: pagador, monto, descripción, entre cuantos se divide (IA function_calling)
- - Mostrar todos los gastos del grupo (IA function_calling y comando)
- - Mostrar los pagos para el ajuste de cuentas (IA function_calling y comando)
- - Cerrar el grupo para comenzar uno nuevo (comando)
+Natural-language parsing is handled through OpenAI function calling. This allows the bot to convert informal user messages into structured actions, such as creating a group, adding an expense, listing expenses, or calculating settlements.
 
----
+Message processing is handled asynchronously with BullMQ. For now, the worker uses sequential processing to preserve message order inside a chat, which is important when users send multiple expense-related messages in a row.
 
-## Ideas para implementar y cosas para mejorar
+## Supported Actions
 
- - [x] Manejar múltiples gastos en un solo mensaje.
- - [x] Agregar manejo de creación de mensajes para respuestas del bot.
- - [x] Formatear la fecha de manera amigable.
- - [x] Agregar procesamiento de webhook async (con setImmediate por ahora).
- - [x] Si estoy en un viaje sin internet y quiero registrar gastos? 
-         * Solucionado con bullmq pero con un solo worker con concurrency=1. Pierdo concurrencia de mensajes de distintos chats, pero de momento nadie usa el bot y prefiero soportar el manejo secuencial de mensajes en un mismo chat.
- - [ ] Manejar concurrencia entre mensajes de múltiples chats
- - [ ] Agregar confirmación al comando de cerrar grupo.
- - [ ] Soportar audio.
- - [ ] Soportar agregar o eliminar participantes del grupo.
- - [ ] Soportar ediciones de gastos.
- - [ ] Ofrecer opción para agrupar la lista de gastos por persona.
- - [ ] Hacer a prueba de balas, testear contra inputs "malditos".
+The bot currently supports:
 
----
+- Creating a group.
+- Adding expenses.
+- Adding multiple expenses from one message.
+- Listing all expenses.
+- Calculating settlement payments.
+- Closing the current group.
 
-## Imágenes
+Some actions are available through both natural-language messages and explicit bot commands.
 
-Puedes probar el bot escaneando el código QR de la primer imagen.
+## Roadmap
+
+Planned improvements:
+
+- Improve concurrency handling across multiple chats.
+- Add confirmation before closing a group.
+- Support audio messages.
+- Support adding or removing participants after group creation.
+- Support editing existing expenses.
+- Add grouped expense views by participant.
+- Expand test coverage for ambiguous or malformed user inputs.
+
+## Demo
+
+You can try the bot by scanning the QR code in the first image.
 
 <div align="center">
-  <img src="./images/bot-qr.jpeg" alt="Demo 2" width="300" height="600" style="margin: 10px"/>
-  <img src="./images/demo-2.jpeg" alt="Demo 2" width="300" height="600" style="margin: 10px"/>
-  <img src="./images/demo-2.2.jpeg" alt="Demo 2.2" width="300" height="600" style="margin: 10px"/>
+  <img src="./images/bot-qr.jpeg" alt="Bot QR code" width="300" height="600" style="margin: 10px"/>
+  <img src="./images/demo-2.jpeg" alt="Bot demo conversation" width="300" height="600" style="margin: 10px"/>
+  <img src="./images/demo-2.2.jpeg" alt="Bot demo conversation details" width="300" height="600" style="margin: 10px"/>
 </div>
