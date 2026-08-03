@@ -89,7 +89,7 @@ export function createErrorExpenseMessage(error: unknown): string {
 
 	if (error instanceof InvalidPayersError) {
 		const list = error.payers.map((p) => `• ${p}`).join("\n");
-		return `❌ Las siguientes persibas no pertenecen al grupo:\n${list}`;
+		return `❌ Las siguientes personas no pertenecen al grupo:\n${list}`;
 	}
 
 	if (error instanceof CreateExpenseError) {
