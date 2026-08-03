@@ -16,9 +16,11 @@ export class IdempotencyConflictError extends Error {}
 export class SqliteExpenseRepository implements ExpenseRepository {
 	constructor(private readonly db: DB) {}
 
-	async getAll(chatId: string): Promise<Expense[]> {
+	async getAll(
+		chatId: string,
+	): Promise<Array<Expense & { splitBetween: string[] }>> {
 		try {
-			return await this.db
+			const groupExpenses = await this.db
 				.select()
 				.from(expenses)
 				.where(
@@ -35,6 +37,15 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 							),
 					),
 				);
+
+			return await Promise.all(
+				groupExpenses.map(async (expense) => ({
+					...expense,
+					splitBetween: (await this.getSplitBetween(expense.id)).map(
+						({ userName }) => userName,
+					),
+				})),
+			);
 		} catch (error) {
 			console.error({ error });
 			throw error;

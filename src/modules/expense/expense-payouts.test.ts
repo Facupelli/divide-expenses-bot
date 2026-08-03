@@ -25,7 +25,11 @@ function createService(
 	participantsByExpense: Map<number, string[]>,
 ): ExpenseService {
 	const expenseRepository: ExpenseRepository = {
-		getAll: async () => expenses,
+		getAll: async () =>
+			expenses.map((expense) => ({
+				...expense,
+				splitBetween: participantsByExpense.get(expense.id) ?? [],
+			})),
 		getSplitBetween: async (expenseId: number) =>
 			(participantsByExpense.get(expenseId) ?? []).map((userName) => ({
 				userName,

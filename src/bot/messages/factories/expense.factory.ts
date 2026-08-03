@@ -9,15 +9,16 @@ import {
 	formatTimestamp,
 } from "../../../modules/expense/expense.helpers";
 
-export function createListExpensesMessage(expenses: Expense[]): string {
+type ExpenseWithParticipants = Expense & { splitBetween: string[] };
+
+export function createListExpensesMessage(
+	expenses: ExpenseWithParticipants[],
+): string {
 	return [
 		"📒 Lista de gastos del grupo",
 		"",
 		expenses
-			.map((expense) => {
-				const date = expense.createdAt.toISOString();
-				return `- ${expense.payer} pagó 💰 ${formatAmount(expense.amount)} por ${expense.description}\n${formatTimestamp(date)}`;
-			})
+			.map((expense, index) => formatExpense(expense, index + 1))
 			.join("\n\n"),
 	].join("\n");
 }
@@ -32,23 +33,60 @@ export function createSuccessExpenseMessage(
 	return createMultipleExpensesMessage(expenses);
 }
 
-function createSingleExpenseMessage(expense: Expense): string {
+function createSingleExpenseMessage(expense: ExpenseWithParticipants): string {
+	return ["✅ Gasto registrado", "", formatExpense(expense)].join("\n");
+}
+
+function createMultipleExpensesMessage(
+	expenses: ExpenseWithParticipants[],
+): string {
 	return [
-		"✅ Gasto registrado",
-		`👤 ${expense.payer} pagó 💰 ${formatAmount(expense.amount)}`,
-		`📝 por: ${expense.description}`,
-		`🕒 ${expense.createdAt.toISOString()}`,
+		`✅ ${expenses.length} gastos registrados`,
+		"",
+		expenses
+			.map((expense, index) => formatExpense(expense, index + 1))
+			.join("\n\n"),
 	].join("\n");
 }
 
-function createMultipleExpensesMessage(expenses: Expense[]): string {
-	const header = `✅ ${expenses.length} gastos registrados:\n`;
-	const expenseLines = expenses.map(
-		(expense, index) =>
-			`${index + 1}. ${expense.payer} - 💰 ${formatAmount(expense.amount)} - ${expense.description}`,
-	);
+function formatExpense(
+	expense: ExpenseWithParticipants,
+	number?: number,
+): string {
+	const share = expense.amount / expense.splitBetween.length;
+	const hasExactShare = Number.isInteger(share);
+	const title = `${number == null ? "📝" : `${number}.`} ${expense.description}: ${formatAmount(expense.amount)}`;
+	const shareLines = hasExactShare
+		? [`💰 Parte individual: ${formatShare(share)}`]
+		: [
+				`💰 Parte individual aproximada: ${formatShare(share)}`,
+				"La diferencia se compensará al ajustar las cuentas.",
+			];
 
-	return header + expenseLines.join("\n");
+	return [
+		title,
+		`👤 Pagó: ${expense.payer}`,
+		`👥 Se divide entre: ${formatParticipantList(expense.splitBetween)}`,
+		...shareLines,
+		`🕒 ${formatTimestamp(expense.createdAt)}`,
+	].join("\n");
+}
+
+function formatParticipantList(participants: string[]): string {
+	if (participants.length < 2) {
+		return participants.join("");
+	}
+
+	return `${participants.slice(0, -1).join(", ")} y ${participants[participants.length - 1]}`;
+}
+
+function formatShare(value: number): string {
+	return new Intl.NumberFormat("es-AR", {
+		style: "currency",
+		currency: "ARS",
+		minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+		maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
+	}).format(value);
 }
 
 export function createErrorExpenseMessage(error: unknown): string {
