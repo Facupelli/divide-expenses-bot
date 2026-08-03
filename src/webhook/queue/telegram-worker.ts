@@ -1,6 +1,8 @@
 import { Worker } from "bullmq";
+import { deps } from "../../composition";
 import { telegramProcessor } from "../processor/telegram-processor";
 import { redis } from "./connection";
+import { enqueueTelegramUpdate } from "./telegram-queue";
 
 export const telegramWorker = new Worker(
 	"telegram-webhook",
@@ -11,8 +13,18 @@ export const telegramWorker = new Worker(
 	},
 );
 
-// optional: log when it is ready
-telegramWorker.on("ready", () => console.log("Telegram worker ready"));
-telegramWorker.on("failed", (job, err) =>
-	console.error("Job failed", job?.id, err),
+telegramWorker.on("ready", async () => {
+	console.log("Telegram worker ready");
+	try {
+		const updateIds = await deps.webhookRepository.getRecoverableUpdateIds();
+		for (const updateId of updateIds) {
+			await enqueueTelegramUpdate(updateId);
+		}
+	} catch (error) {
+		console.error("Failed to recover Telegram updates", error);
+	}
+});
+
+telegramWorker.on("failed", (job, error) =>
+	console.error("Job failed", job?.id, error),
 );

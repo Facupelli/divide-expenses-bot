@@ -7,6 +7,7 @@ const dbPath = isDev ? "database.db" : process.env.SQLITE_PATH;
 
 const sqlite = new Database(dbPath);
 
+sqlite.pragma("foreign_keys = ON");
 // Enable WAL mode for better concurrent access
 sqlite.pragma("journal_mode = WAL");
 

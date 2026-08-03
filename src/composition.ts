@@ -17,6 +17,7 @@ import { SqliteGroupRepository } from "./modules/group/group.sqlite.repository";
 import { UserService } from "./modules/user/user.service";
 import { SqliteUserRepository } from "./modules/user/user.sqlite.repository";
 import { UserPresenter } from "./modules/user/user-presenter";
+import { WebhookRepository } from "./webhook/webhook.repository";
 import { WebhookService } from "./webhook/webhook.service";
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
@@ -40,6 +41,7 @@ const openaiAdapter = new OpenAIAdapter(openaiClient);
 const userRepository = new SqliteUserRepository(db);
 const expenseRepository = new SqliteExpenseRepository(db);
 const groupRepository = new SqliteGroupRepository(db);
+const webhookRepository = new WebhookRepository(db);
 
 // General Services
 const groupService = new GroupService(groupRepository);
@@ -59,11 +61,7 @@ const commandRegistry = new CommandRegistry()
 const aiService = new AIService(openaiAdapter, userPresenter, expensePresenter);
 
 const telegramService = new TelegramService(telegramAdapter);
-const webhookService = new WebhookService(
-	aiService,
-	commandRegistry,
-	chatService,
-);
+const webhookService = new WebhookService(aiService, commandRegistry);
 
 export const deps = {
 	aiService,
@@ -80,6 +78,7 @@ export const deps = {
 	userPresenter,
 	userRepository,
 	userService,
+	webhookRepository,
 	webhookService,
 } as const;
 

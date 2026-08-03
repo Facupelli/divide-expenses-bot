@@ -4,6 +4,7 @@ import {
 	primaryKey,
 	sqliteTable,
 	text,
+	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
@@ -33,18 +34,43 @@ export const users = sqliteTable(
 	(t) => [primaryKey({ columns: [t.name, t.groupId] })],
 );
 
-export const expenses = sqliteTable("expenses", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
+export const expenseOperations = sqliteTable("expense_operations", {
+	idempotencyKey: text("idempotency_key").primaryKey(),
+	payloadHash: text("payload_hash").notNull(),
 	groupId: integer("group_id")
 		.references(() => groups.id, { onDelete: "cascade" })
 		.notNull(),
-	payer: text("payer").notNull(),
-	amount: integer("amount").notNull(),
-	description: text("description").notNull(),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.notNull()
 		.$defaultFn(() => new Date()),
 });
+
+export const expenses = sqliteTable(
+	"expenses",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		groupId: integer("group_id")
+			.references(() => groups.id, { onDelete: "cascade" })
+			.notNull(),
+		payer: text("payer").notNull(),
+		amount: integer("amount").notNull(),
+		description: text("description").notNull(),
+		operationKey: text("operation_key").references(
+			() => expenseOperations.idempotencyKey,
+			{ onDelete: "restrict" },
+		),
+		operationIndex: integer("operation_index"),
+		createdAt: integer("created_at", { mode: "timestamp" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+	},
+	(t) => [
+		uniqueIndex("expenses_operation_item_unique").on(
+			t.operationKey,
+			t.operationIndex,
+		),
+	],
+);
 
 export const expenseParticipants = sqliteTable(
 	"expense_participants",
@@ -82,3 +108,45 @@ export type NewExpense = typeof expenses.$inferInsert;
 
 export const insertExpenseParticipantSchema =
 	createInsertSchema(expenseParticipants);
+
+export const telegramUpdates = sqliteTable("telegram_updates", {
+	updateId: integer("update_id").primaryKey(),
+	chatId: text("chat_id").notNull(),
+	payload: text("payload").notNull(),
+	status: text("status", {
+		enum: ["received", "processing", "completed"],
+	})
+		.notNull()
+		.default("received"),
+	lastError: text("last_error"),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.notNull()
+		.$defaultFn(() => new Date()),
+	completedAt: integer("completed_at", { mode: "timestamp" }),
+});
+
+export const outboundMessages = sqliteTable(
+	"outbound_messages",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		updateId: integer("update_id")
+			.references(() => telegramUpdates.updateId, { onDelete: "cascade" })
+			.notNull(),
+		sequence: integer("sequence").notNull(),
+		chatId: text("chat_id").notNull(),
+		text: text("text").notNull(),
+		status: text("status", { enum: ["pending", "sent"] })
+			.notNull()
+			.default("pending"),
+		createdAt: integer("created_at", { mode: "timestamp" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		sentAt: integer("sent_at", { mode: "timestamp" }),
+	},
+	(t) => [
+		uniqueIndex("outbound_messages_update_sequence_unique").on(
+			t.updateId,
+			t.sequence,
+		),
+	],
+);

@@ -1,12 +1,9 @@
 import "dotenv/config";
-import "./webhook/queue/telegram-worker";
 import Database from "better-sqlite3";
 import cors from "cors";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import express from "express";
-import telegramRouter from "./bot/telegram/telegram.route";
-import webhookRouter from "./webhook/webhook.route";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -36,6 +33,15 @@ async function startServer(): Promise<void> {
 		if (isProd) {
 			await runMigrations();
 		}
+
+		const telegramRouter = (
+			require("./bot/telegram/telegram.route") as typeof import("./bot/telegram/telegram.route")
+		).default;
+		const webhookRouter = (
+			require("./webhook/webhook.route") as typeof import("./webhook/webhook.route")
+		).default;
+		require("./webhook/queue/telegram-worker");
+		require("./webhook/queue/outbound-worker");
 
 		const app = express();
 		const PORT = process.env.PORT || 3000;

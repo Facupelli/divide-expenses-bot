@@ -27,6 +27,7 @@ export class AIService {
 	async createResponse(
 		chatId: number,
 		input: string,
+		idempotencyKey: string,
 	): Promise<string | string[] | undefined> {
 		let augmentedInstructions: string | undefined;
 		const { message } = await this.userPresenter.getUsers(String(chatId));
@@ -62,7 +63,12 @@ export class AIService {
 			const name = toolCall.name;
 			const args = JSON.parse(toolCall.arguments);
 
-			const result = await this.callFunction(name, args, String(chatId));
+			const result = await this.callFunction(
+				name,
+				args,
+				String(chatId),
+				`${idempotencyKey}:${name}`,
+			);
 			console.log("FUNCTION CALLING RESULT:", { result });
 
 			if (result) {
@@ -76,7 +82,12 @@ export class AIService {
 		}
 	}
 
-	private async callFunction(name: string, args: any, chatId: string) {
+	private async callFunction(
+		name: string,
+		args: any,
+		chatId: string,
+		idempotencyKey: string,
+	) {
 		if (name === "get_payouts") {
 			return await this.expensePresenter.getPayouts(chatId);
 		}
@@ -87,7 +98,11 @@ export class AIService {
 			return await this.userPresenter.addUsers(args.names, chatId);
 		}
 		if (name === "add_expense") {
-			return await this.expensePresenter.addExpenses(args.expenses, chatId);
+			return await this.expensePresenter.addExpenses(
+				args.expenses,
+				chatId,
+				idempotencyKey,
+			);
 		}
 	}
 }

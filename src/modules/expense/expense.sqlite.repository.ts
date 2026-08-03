@@ -1,7 +1,8 @@
-import { and, eq, exists } from "drizzle-orm";
+import { and, asc, eq, exists } from "drizzle-orm";
 import type { DB } from "../../db";
 import {
 	type Expense,
+	expenseOperations,
 	expenseParticipants,
 	expenses,
 	groups,
@@ -10,12 +11,14 @@ import {
 } from "../../db/schema";
 import type { ExpenseRepository } from "./expense.repository";
 
+export class IdempotencyConflictError extends Error {}
+
 export class SqliteExpenseRepository implements ExpenseRepository {
 	constructor(private readonly db: DB) {}
 
 	async getAll(chatId: string): Promise<Expense[]> {
 		try {
-			const groupExpenses = await this.db
+			return await this.db
 				.select()
 				.from(expenses)
 				.where(
@@ -32,8 +35,6 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 							),
 					),
 				);
-
-			return groupExpenses;
 		} catch (error) {
 			console.error({ error });
 			throw error;
@@ -42,49 +43,99 @@ export class SqliteExpenseRepository implements ExpenseRepository {
 
 	async getSplitBetween(expenseId: number): Promise<{ userName: string }[]> {
 		try {
-			const splitBetween = await this.db
+			return await this.db
 				.select({ userName: expenseParticipants.userName })
 				.from(expenseParticipants)
 				.where(eq(expenseParticipants.expenseId, expenseId));
-
-			return splitBetween;
 		} catch (error) {
 			console.error({ error });
 			throw error;
 		}
 	}
 
-	async save(
-		expense: NewExpense,
-		splitBetween: string[],
+	async saveMultiple(
+		items: Array<{ expense: NewExpense; splitBetween: string[] }>,
 		groupId: number,
-	): Promise<Expense> {
+		idempotencyKey: string,
+		payloadHash: string,
+	): Promise<Array<Expense & { splitBetween: string[] }>> {
 		try {
-			return await this.db.transaction(
+			return this.db.transaction(
 				(tx) => {
-					const newExpense = tx
-						.insert(expenses)
-						.values(expense)
-						.returning()
+					const existingOperation = tx
+						.select()
+						.from(expenseOperations)
+						.where(eq(expenseOperations.idempotencyKey, idempotencyKey))
 						.get();
 
-					const participantRecords = splitBetween.map((userName) =>
-						insertExpenseParticipantSchema.parse({
-							expenseId: newExpense.id,
-							userName,
-							groupId,
-						}),
-					);
+					if (existingOperation != null) {
+						if (
+							existingOperation.payloadHash !== payloadHash ||
+							existingOperation.groupId !== groupId
+						) {
+							throw new IdempotencyConflictError(
+								"The idempotency key was already used with different expense data",
+							);
+						}
 
-					tx.insert(expenseParticipants).values(participantRecords).run();
+						return this.getOperationExpenses(tx, idempotencyKey);
+					}
 
-					return newExpense;
+					tx.insert(expenseOperations)
+						.values({ idempotencyKey, payloadHash, groupId })
+						.run();
+
+					for (const [operationIndex, item] of items.entries()) {
+						const newExpense = tx
+							.insert(expenses)
+							.values({
+								...item.expense,
+								operationKey: idempotencyKey,
+								operationIndex,
+							})
+							.returning()
+							.get();
+
+						const participantRecords = item.splitBetween.map((userName) =>
+							insertExpenseParticipantSchema.parse({
+								expenseId: newExpense.id,
+								userName,
+								groupId,
+							}),
+						);
+
+						tx.insert(expenseParticipants).values(participantRecords).run();
+					}
+
+					return this.getOperationExpenses(tx, idempotencyKey);
 				},
-				{ behavior: "deferred" },
+				{ behavior: "immediate" },
 			);
 		} catch (error) {
 			console.error({ error });
 			throw error;
 		}
+	}
+
+	private getOperationExpenses(
+		db: Parameters<Parameters<DB["transaction"]>[0]>[0],
+		idempotencyKey: string,
+	): Array<Expense & { splitBetween: string[] }> {
+		const savedExpenses = db
+			.select()
+			.from(expenses)
+			.where(eq(expenses.operationKey, idempotencyKey))
+			.orderBy(asc(expenses.operationIndex))
+			.all();
+
+		return savedExpenses.map((expense) => ({
+			...expense,
+			splitBetween: db
+				.select({ userName: expenseParticipants.userName })
+				.from(expenseParticipants)
+				.where(eq(expenseParticipants.expenseId, expense.id))
+				.all()
+				.map(({ userName }) => userName),
+		}));
 	}
 }

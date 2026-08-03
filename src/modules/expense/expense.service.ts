@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { type Expense, insertExpenseSchema } from "../../db/schema";
 import type { GroupService } from "../group/group.service";
 import {
@@ -5,12 +6,12 @@ import {
 	InvalidPayersError,
 	NoActiveGroupError,
 } from "./expense.errors";
-import type { SqliteExpenseRepository } from "./expense.sqlite.repository";
+import type { ExpenseRepository } from "./expense.repository";
 import type { PayoutsResponse, PayoutTransaction } from "./expense.types";
 
 export class ExpenseService {
 	constructor(
-		private expenseRepository: SqliteExpenseRepository,
+		private expenseRepository: ExpenseRepository,
 		private groupService: GroupService,
 	) {}
 
@@ -26,6 +27,7 @@ export class ExpenseService {
 			splitBetween: string[];
 		}>,
 		chatId: string,
+		idempotencyKey: string,
 	): Promise<Array<Expense & { splitBetween: string[] }>> {
 		const groupId = await this.groupService.getActive(chatId);
 
@@ -49,38 +51,35 @@ export class ExpenseService {
 			throw new InvalidPayersError(invalidPayers);
 		}
 
-		// Process all expenses
-		const results: Array<Expense & { splitBetween: string[] }> = [];
-
 		try {
-			for (const expense of expenses) {
-				const expenseData = {
+			const validated = expenses.map((expense) => ({
+				expense: insertExpenseSchema.parse({
 					payer: expense.payer,
 					amount: expense.amount,
 					description: expense.description,
-				};
-
-				const validatedExpense = insertExpenseSchema.parse({
-					...expenseData,
 					groupId,
-				});
+				}),
+				splitBetween: expense.splitBetween,
+			}));
+			const canonicalPayload = expenses.map((expense) => ({
+				payer: expense.payer,
+				amount: expense.amount,
+				description: expense.description,
+				splitBetween: expense.splitBetween,
+			}));
+			const payloadHash = createHash("sha256")
+				.update(JSON.stringify(canonicalPayload))
+				.digest("hex");
 
-				const newExpense = await this.expenseRepository.save(
-					validatedExpense,
-					expense.splitBetween,
-					groupId,
-				);
-
-				results.push({
-					...newExpense,
-					splitBetween: expense.splitBetween,
-				});
-			}
+			return await this.expenseRepository.saveMultiple(
+				validated,
+				groupId,
+				idempotencyKey,
+				payloadHash,
+			);
 		} catch (_) {
 			throw new CreateExpenseError();
 		}
-
-		return results;
 	}
 
 	async getPayouts(chatId: string): Promise<PayoutsResponse> {

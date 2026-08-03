@@ -27,10 +27,18 @@ export class TelegramChatAdapter implements ChatProvider {
 					text,
 					// parse_mode: "MarkdownV2",
 				}),
+				signal: AbortSignal.timeout(10_000),
 			});
 
-			const data = await response.json();
-			// console.log({ data });
+			const data = (await response.json()) as {
+				ok?: boolean;
+				description?: string;
+			};
+			if (!response.ok || data.ok !== true) {
+				throw new Error(
+					`Telegram sendMessage failed: ${data.description ?? response.statusText}`,
+				);
+			}
 		} catch (error) {
 			console.error("[TELEGRAM SEND_MESSAGE] error:", { error });
 			throw error;

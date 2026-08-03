@@ -34,9 +34,14 @@ export class ExpensePresenter {
 			splitBetween: string[];
 		}>,
 		chatId: string,
+		idempotencyKey: string,
 	) {
 		try {
-			const results = await this.expenseService.saveMultiple(expenses, chatId);
+			const results = await this.expenseService.saveMultiple(
+				expenses,
+				chatId,
+				idempotencyKey,
+			);
 			const message = createSuccessExpenseMessage(results);
 			return { success: true, message };
 		} catch (error) {
