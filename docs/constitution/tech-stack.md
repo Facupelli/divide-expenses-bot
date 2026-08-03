@@ -15,7 +15,18 @@
 | Dates | Day.js |
 | Formatting and linting | Biome |
 | Development runner | tsx |
-| Deployment | Multi-stage Docker image |
+| Deployment platform | Northflank |
+| Deployment artifact | Multi-stage Docker image |
+
+## Production deployment
+
+Production runs on Northflank and consists of:
+
+- A service running the Express application from the project's Docker image.
+- A persistent volume named `sqlite-data` for the SQLite database.
+- A Redis addon used by BullMQ for queueing and asynchronous message processing.
+
+The application service connects to the persistent volume through `SQLITE_PATH` and to the Redis addon through `REDIS_MASTER_URL`.
 
 ## Runtime flow
 
