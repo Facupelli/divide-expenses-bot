@@ -45,6 +45,28 @@ export class TelegramChatAdapter implements ChatProvider {
 		}
 	}
 
+	async sendTyping(chatId: number): Promise<void> {
+		const requestUrl = `${this.telegramUrl}/sendChatAction`;
+		const response = await fetch(requestUrl, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+			signal: AbortSignal.timeout(5_000),
+		});
+		const data = (await response.json()) as {
+			ok?: boolean;
+			description?: string;
+		};
+
+		if (!response.ok || data.ok !== true) {
+			throw new Error(
+				`Telegram sendChatAction failed: ${data.description ?? response.statusText}`,
+			);
+		}
+	}
+
 	async validateWebhook(req: Request): Promise<boolean> {
 		const headers = req.headers;
 

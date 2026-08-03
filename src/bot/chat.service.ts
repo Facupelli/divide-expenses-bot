@@ -19,4 +19,8 @@ export class ChatService {
 	async sendMessage(chatId: number, text: string) {
 		return await this.chat.sendMessage(chatId, text);
 	}
+
+	async sendTyping(chatId: number) {
+		return await this.chat.sendTyping(chatId);
+	}
 }

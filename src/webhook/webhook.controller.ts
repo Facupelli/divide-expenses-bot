@@ -20,7 +20,7 @@ export function createWebhookController(
 
 			try {
 				await webhookRepository.receive(update);
-				await enqueueTelegramUpdate(update.update_id);
+				await enqueueTelegramUpdate(update.update_id, message.chat.id);
 			} catch (error) {
 				console.error("[HANDLE-WEBHOOK] durable ingestion failed", { error });
 				return res.sendStatus(503);

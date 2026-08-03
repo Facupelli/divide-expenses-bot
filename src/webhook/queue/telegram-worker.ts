@@ -9,7 +9,7 @@ export const telegramWorker = new Worker(
 	telegramProcessor,
 	{
 		connection: redis,
-		concurrency: 1,
+		concurrency: 10,
 	},
 );
 
@@ -18,7 +18,10 @@ telegramWorker.on("ready", async () => {
 	try {
 		const updateIds = await deps.webhookRepository.getRecoverableUpdateIds();
 		for (const updateId of updateIds) {
-			await enqueueTelegramUpdate(updateId);
+			const update = await deps.webhookRepository.getUpdate(updateId);
+			if (update != null) {
+				await enqueueTelegramUpdate(updateId, update.message.chat.id);
+			}
 		}
 	} catch (error) {
 		console.error("Failed to recover Telegram updates", error);

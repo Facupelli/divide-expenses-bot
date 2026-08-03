@@ -3,6 +3,7 @@ import { redis } from "./connection";
 
 export interface TelegramJobData {
 	updateId: number;
+	chatId: number;
 }
 
 export const telegramQueue = new Queue<TelegramJobData>("telegram-webhook", {
@@ -15,7 +16,10 @@ export const telegramQueue = new Queue<TelegramJobData>("telegram-webhook", {
 	},
 });
 
-export async function enqueueTelegramUpdate(updateId: number): Promise<void> {
+export async function enqueueTelegramUpdate(
+	updateId: number,
+	chatId: number,
+): Promise<void> {
 	const jobId = `telegram-update-${updateId}`;
 	const existingJob = await telegramQueue.getJob(jobId);
 
@@ -26,5 +30,5 @@ export async function enqueueTelegramUpdate(updateId: number): Promise<void> {
 		return;
 	}
 
-	await telegramQueue.add("telegram-message", { updateId }, { jobId });
+	await telegramQueue.add("telegram-message", { updateId, chatId }, { jobId });
 }

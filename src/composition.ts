@@ -22,6 +22,7 @@ import { SqliteGroupRepository } from "./modules/group/group.sqlite.repository";
 import { UserService } from "./modules/user/user.service";
 import { SqliteUserRepository } from "./modules/user/user.sqlite.repository";
 import { UserPresenter } from "./modules/user/user-presenter";
+import { TelegramProcessingNotifier } from "./webhook/processing-notifier";
 import { WebhookRepository } from "./webhook/webhook.repository";
 import { WebhookService } from "./webhook/webhook.service";
 
@@ -33,7 +34,11 @@ if (!openaiApiKey || !telegramBotToken || !telegramWebhookUrl) {
 	throw new Error("ENV variable missing");
 }
 
-const openaiClient = new OpenAI({ apiKey: openaiApiKey });
+const openaiClient = new OpenAI({
+	apiKey: openaiApiKey,
+	timeout: 15_000,
+	maxRetries: 0,
+});
 
 // Adapters
 const telegramAdapter = new TelegramChatAdapter({
@@ -68,7 +73,12 @@ const commandRegistry = new CommandRegistry()
 const aiService = new AIService(openaiAdapter, userPresenter, expensePresenter);
 
 const telegramService = new TelegramService(telegramAdapter);
-const webhookService = new WebhookService(aiService, commandRegistry);
+const processingNotifier = new TelegramProcessingNotifier(chatService);
+const webhookService = new WebhookService(
+	aiService,
+	commandRegistry,
+	processingNotifier,
+);
 
 export const deps = {
 	aiService,

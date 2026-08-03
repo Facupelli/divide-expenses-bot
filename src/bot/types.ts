@@ -2,6 +2,7 @@ import type { Request } from "express";
 
 export interface ChatProvider {
 	sendMessage(chatId: number, text: string): Promise<void>;
+	sendTyping(chatId: number): Promise<void>;
 	setWebhook(): Promise<void>;
 	getWebhookInfo(): Promise<void>;
 	validateWebhook(req: Request): Promise<boolean>;
