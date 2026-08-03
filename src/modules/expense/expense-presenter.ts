@@ -32,6 +32,7 @@ export class ExpensePresenter {
 			amount: string;
 			description: string;
 			splitBetween: string[];
+			excludedParticipants?: string[];
 		}>,
 		chatId: string,
 		idempotencyKey: string,

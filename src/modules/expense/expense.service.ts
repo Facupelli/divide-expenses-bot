@@ -3,6 +3,7 @@ import { type Expense, insertExpenseSchema } from "../../db/schema";
 import type { GroupService } from "../group/group.service";
 import {
 	CreateExpenseError,
+	InvalidParticipantsError,
 	InvalidPayersError,
 	NoActiveGroupError,
 } from "./expense.errors";
@@ -11,6 +12,21 @@ import type { PayoutsResponse, PayoutTransaction } from "./expense.types";
 import { parseAmountToCents } from "./money";
 
 type Fraction = { numerator: bigint; denominator: bigint };
+
+type ExpenseInput = {
+	payer: string;
+	amount: string;
+	description: string;
+	splitBetween: string[];
+	excludedParticipants?: string[];
+};
+
+function normalizeParticipantName(name: string): string {
+	return name
+		.normalize("NFD")
+		.replace(/\p{Diacritic}/gu, "")
+		.toLocaleLowerCase();
+}
 
 function greatestCommonDivisor(left: bigint, right: bigint): bigint {
 	let a = left;
@@ -68,10 +84,7 @@ function allocateRoundedShares(
 	return allocated;
 }
 
-type ExpenseGroupService = Pick<
-	GroupService,
-	"checkUserIsInGroup" | "getActive" | "getUsers"
->;
+type ExpenseGroupService = Pick<GroupService, "getActive" | "getUsers">;
 
 export class ExpenseService {
 	constructor(
@@ -84,12 +97,7 @@ export class ExpenseService {
 	}
 
 	async saveMultiple(
-		expenses: Array<{
-			payer: string;
-			amount: string;
-			description: string;
-			splitBetween: string[];
-		}>,
+		expenses: ExpenseInput[],
 		chatId: string,
 		idempotencyKey: string,
 	): Promise<Array<Expense & { splitBetween: string[] }>> {
@@ -99,24 +107,58 @@ export class ExpenseService {
 			throw new NoActiveGroupError();
 		}
 
-		// Validate all payers are in the group
-		const invalidPayers = [];
-		for (const expense of expenses) {
-			const isUserValid = await this.groupService.checkUserIsInGroup(
-				expense.payer,
-				chatId,
-			);
-			if (!isUserValid) {
-				invalidPayers.push(expense.payer);
-			}
+		const groupUsers = await this.groupService.getUsers(chatId);
+		const canonicalNames = new Map(
+			groupUsers.map((name) => [normalizeParticipantName(name), name]),
+		);
+		const invalidParticipants = expenses.flatMap((expense) =>
+			[...expense.splitBetween, ...(expense.excludedParticipants ?? [])].filter(
+				(name) => !canonicalNames.has(normalizeParticipantName(name)),
+			),
+		);
+		if (invalidParticipants.length > 0) {
+			throw new InvalidParticipantsError([...new Set(invalidParticipants)]);
 		}
+
+		const canonicalExpenses = expenses.map((expense) => {
+			const payer = canonicalNames.get(normalizeParticipantName(expense.payer));
+			if (payer == null) {
+				return { ...expense, payer: expense.payer };
+			}
+
+			const excluded = new Set(
+				(expense.excludedParticipants ?? []).map(normalizeParticipantName),
+			);
+			const requestedParticipants =
+				excluded.size > 0
+					? groupUsers.filter(
+							(name) => !excluded.has(normalizeParticipantName(name)),
+						)
+					: expense.splitBetween.flatMap((name) => {
+							const canonical = canonicalNames.get(
+								normalizeParticipantName(name),
+							);
+							return canonical == null ? [] : [canonical];
+						});
+			const splitBetween = requestedParticipants.includes(payer)
+				? [...new Set(requestedParticipants)]
+				: [payer, ...new Set(requestedParticipants)];
+
+			return { ...expense, payer, splitBetween };
+		});
+		const invalidPayers = canonicalExpenses
+			.filter(
+				(expense) =>
+					!canonicalNames.has(normalizeParticipantName(expense.payer)),
+			)
+			.map((expense) => expense.payer);
 
 		if (invalidPayers.length > 0) {
 			throw new InvalidPayersError(invalidPayers);
 		}
 
 		try {
-			const expensesInCents = expenses.map((expense) => ({
+			const expensesInCents = canonicalExpenses.map((expense) => ({
 				...expense,
 				amount: parseAmountToCents(expense.amount),
 			}));

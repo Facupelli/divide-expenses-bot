@@ -40,7 +40,7 @@ test("single expense confirmation explains an exact split", () => {
 
 	assert.match(message, /^✅ Gasto registrado\n\n/);
 	assert.ok(message.includes(`📝 Entradas: ${formatAmount(400_000)}`));
-	assert.ok(message.includes("👤 Pagó: Waldo"));
+	assert.ok(message.includes("💳 Pagó: Waldo"));
 	assert.ok(message.includes("👥 Se divide entre: Waldo, Ana, Beto y Carla"));
 	assert.ok(message.includes(`💰 Parte individual: ${formatAmount(100_000)}`));
 	assert.ok(!message.includes("aproximada"));
@@ -54,7 +54,7 @@ test("confirmation explains a repeating split without implying exactness", () =>
 	assert.ok(message.includes("💰 Parte individual aproximada:"));
 	assert.ok(message.includes("33,33"));
 	assert.ok(
-		message.includes("La diferencia se compensará al ajustar las cuentas."),
+		!message.includes("La diferencia se compensará al ajustar las cuentas."),
 	);
 });
 
@@ -94,7 +94,7 @@ test("expense history includes participants and individual shares", () => {
 
 	assert.match(message, /^📒 Lista de gastos del grupo\n\n/);
 	assert.ok(message.includes(`1. Entradas: ${formatAmount(400_000)}`));
-	assert.ok(message.includes("👤 Pagó: Waldo"));
+	assert.ok(message.includes("💳 Pagó: Waldo"));
 	assert.ok(message.includes("👥 Se divide entre: Waldo, Ana, Beto y Carla"));
 	assert.ok(message.includes(`💰 Parte individual: ${formatAmount(100_000)}`));
 });

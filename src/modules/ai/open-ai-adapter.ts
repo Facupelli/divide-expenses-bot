@@ -79,8 +79,20 @@ const tools: Tool[] = [
 								description:
 									"Lista de nombres de las personas entre las que se debe dividir un gasto",
 							},
+							excludedParticipants: {
+								type: "array",
+								items: { type: "string" },
+								description:
+									"Participantes excluidos explícitamente. Para 'todos menos Abdul', usar ['Abdul']. Usar [] si no hay exclusiones.",
+							},
 						},
-						required: ["payer", "amount", "description", "splitBetween"],
+						required: [
+							"payer",
+							"amount",
+							"description",
+							"splitBetween",
+							"excludedParticipants",
+						],
 						additionalProperties: false,
 					},
 					minItems: 1,

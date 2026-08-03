@@ -1,6 +1,7 @@
 import type { Expense } from "../../../db/schema";
 import {
 	CreateExpenseError,
+	InvalidParticipantsError,
 	InvalidPayersError,
 	NoActiveGroupError,
 } from "../../../modules/expense/expense.errors";
@@ -62,12 +63,11 @@ function formatExpense(
 		? [`💰 Parte individual: ${formatAmount(amount / participantCount)}`]
 		: [
 				`💰 Parte individual aproximada: ${formatFractionalCents(amount, participantCount)}`,
-				"La diferencia se compensará al ajustar las cuentas.",
 			];
 
 	return [
 		title,
-		`👤 Pagó: ${expense.payer}`,
+		`💳 Pagó: ${expense.payer}`,
 		`👥 Se divide entre: ${formatParticipantList(expense.splitBetween)}`,
 		...shareLines,
 		`🕒 ${formatTimestamp(expense.createdAt)}`,
@@ -90,6 +90,13 @@ export function createErrorExpenseMessage(error: unknown): string {
 	if (error instanceof InvalidPayersError) {
 		const list = error.payers.map((p) => `• ${p}`).join("\n");
 		return `❌ Las siguientes personas no pertenecen al grupo:\n${list}`;
+	}
+
+	if (error instanceof InvalidParticipantsError) {
+		const list = error.participants
+			.map((participant) => `• ${participant}`)
+			.join("\n");
+		return `❌ No se reconocieron estos participantes:\n${list}`;
 	}
 
 	if (error instanceof CreateExpenseError) {

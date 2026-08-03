@@ -1,6 +1,7 @@
 export const EXPENSE_ERROR_TYPE = {
 	NO_ACTIVE_GROUP: "NO_ACTIVE_GROUP",
 	INVALID_PAYERS: "INVALID_PAYERS",
+	INVALID_PARTICIPANTS: "INVALID_PARTICIPANTS",
 	CREATE_EXPENSE: "CREATE_EXPENSE",
 } as const;
 
@@ -8,6 +9,13 @@ export type ExpenseErrorType =
 	(typeof EXPENSE_ERROR_TYPE)[keyof typeof EXPENSE_ERROR_TYPE];
 
 export class CreateExpenseError extends Error {}
+
+export class InvalidParticipantsError extends Error {
+	readonly tag = EXPENSE_ERROR_TYPE.INVALID_PARTICIPANTS;
+	constructor(public readonly participants: string[]) {
+		super();
+	}
+}
 
 export class NoActiveGroupError extends Error {
 	readonly tag = EXPENSE_ERROR_TYPE.NO_ACTIVE_GROUP;

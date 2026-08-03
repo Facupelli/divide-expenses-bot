@@ -71,6 +71,14 @@ Si encuentras: `número + nombre` o `nombre + número`, interpreta como posible 
 ### División por Defecto
 Si no se especifica división, asume que es entre todos los participantes registrados.
 
+### Exclusiones explícitas
+Si el usuario dice "todos menos X", "excepto X" o una expresión equivalente:
+- Incluye a X en `excludedParticipants`.
+- Incluye a todos los demás participantes registrados en `splitBetween`.
+- No reemplaces a la persona excluida por el pagador.
+- Ejemplo: grupo [Cruz, Abdul, Waldo], "Cruz pagó 24500, dividir entre todos menos Abdul" → `payer="Cruz"`, `splitBetween=["Cruz","Waldo"]`, `excludedParticipants=["Abdul"]`.
+Si no hay una exclusión explícita, envía `excludedParticipants=[]`.
+
 ### El pagador siempre debe estar en la lista de división.
 Por ejemplo si encuentras "Jorge gastó 5000 en nafta, entre Facu y Juanchi", el pago se debe dividir entre los 3 (Jorge, Facu y Juanchi), "splitBetween""=["Jorge","Facu","Juanchi"]
 SIEMPRE añade al participante que hizo el pago entre los participantes que se deben dividr el gasto.
@@ -83,6 +91,7 @@ SIEMPRE añade al participante que hizo el pago entre los participantes que se d
 - Monto: $[cantidad]
 - Descripción: [concepto]
 - Se divide entre: [lista de nombres]
+- Participantes excluidos explícitamente: [lista o vacío]
 ```
 
 ## Casos Especiales
