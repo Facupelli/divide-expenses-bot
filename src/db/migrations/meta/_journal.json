@@ -15,6 +15,13 @@
       "when": 1785779048003,
       "tag": "0001_strong_agent_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785781393288,
+      "tag": "0002_convert-expense-amounts-to-cents",
+      "breakpoints": true
     }
   ]
 }

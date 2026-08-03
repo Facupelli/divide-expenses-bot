@@ -8,6 +8,7 @@ import {
 	formatAmount,
 	formatTimestamp,
 } from "../../../modules/expense/expense.helpers";
+import { formatFractionalCents } from "../../../modules/expense/money";
 
 type ExpenseWithParticipants = Expense & { splitBetween: string[] };
 
@@ -53,13 +54,14 @@ function formatExpense(
 	expense: ExpenseWithParticipants,
 	number?: number,
 ): string {
-	const share = expense.amount / expense.splitBetween.length;
-	const hasExactShare = Number.isInteger(share);
-	const title = `${number == null ? "📝" : `${number}.`} ${expense.description}: ${formatAmount(expense.amount)}`;
+	const amount = BigInt(expense.amount);
+	const participantCount = BigInt(expense.splitBetween.length);
+	const hasExactShare = amount % participantCount === BigInt(0);
+	const title = `${number == null ? "📝" : `${number}.`} ${expense.description}: ${formatAmount(amount)}`;
 	const shareLines = hasExactShare
-		? [`💰 Parte individual: ${formatShare(share)}`]
+		? [`💰 Parte individual: ${formatAmount(amount / participantCount)}`]
 		: [
-				`💰 Parte individual aproximada: ${formatShare(share)}`,
+				`💰 Parte individual aproximada: ${formatFractionalCents(amount, participantCount)}`,
 				"La diferencia se compensará al ajustar las cuentas.",
 			];
 
@@ -78,15 +80,6 @@ function formatParticipantList(participants: string[]): string {
 	}
 
 	return `${participants.slice(0, -1).join(", ")} y ${participants[participants.length - 1]}`;
-}
-
-function formatShare(value: number): string {
-	return new Intl.NumberFormat("es-AR", {
-		style: "currency",
-		currency: "ARS",
-		minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
-		maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
-	}).format(value);
 }
 
 export function createErrorExpenseMessage(error: unknown): string {

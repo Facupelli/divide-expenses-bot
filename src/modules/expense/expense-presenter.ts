@@ -29,7 +29,7 @@ export class ExpensePresenter {
 	async addExpenses(
 		expenses: Array<{
 			payer: string;
-			amount: number;
+			amount: string;
 			description: string;
 			splitBetween: string[];
 		}>,

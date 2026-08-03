@@ -1,4 +1,4 @@
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 import type { OpenAI } from "openai";
 import type {
 	ResponseInput,
@@ -61,9 +61,10 @@ const tools: Tool[] = [
 								description: "Nombre de la persona que pagó el gasto",
 							},
 							amount: {
-								type: "number",
+								type: "string",
+								pattern: "^(?:0|[1-9]\\d*)(?:\\.\\d{1,2})?$",
 								description:
-									"Monto del gasto en números (sin símbolos de moneda)",
+									"Monto del gasto en pesos como decimal, sin símbolo de moneda, con punto como separador y un máximo de dos decimales (ej: 2033.33)",
 							},
 							description: {
 								type: "string",

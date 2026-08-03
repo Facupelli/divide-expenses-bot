@@ -1,0 +1,1 @@
+UPDATE `expenses` SET `amount` = `amount` * 100;
