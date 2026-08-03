@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsx --test src/modules/expense/*.test.ts",
+    "test": "tsx --test $(find src -name '*.test.ts' -type f)",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "db:migrate": "drizzle-kit migrate --config=src/drizzle.config.ts",

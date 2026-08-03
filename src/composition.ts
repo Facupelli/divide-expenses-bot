@@ -4,6 +4,11 @@ import { ClosegroupCommand } from "./bot/commands/close-group.command";
 import { CommandRegistry } from "./bot/commands/command-registry";
 import { GetExpensesCommand } from "./bot/commands/get-expenses.command copy";
 import { GetPayoutCommand } from "./bot/commands/get-payouts.command";
+import { StaticMessageCommand } from "./bot/commands/static-message.command";
+import {
+	createHelpMessage,
+	createStartMessage,
+} from "./bot/messages/factories/help.factory";
 import { TelegramService } from "./bot/telegram/telegram.service";
 import { TelegramChatAdapter } from "./bot/telegram/telegram-chat-adapter";
 import { db } from "./db";
@@ -54,6 +59,8 @@ const userPresenter = new UserPresenter(userService, groupService);
 const expensePresenter = new ExpensePresenter(expenseService);
 
 const commandRegistry = new CommandRegistry()
+	.register(new StaticMessageCommand("start", createStartMessage()))
+	.register(new StaticMessageCommand("ayuda", createHelpMessage()))
 	.register(new ClosegroupCommand(groupService))
 	.register(new GetPayoutCommand(expensePresenter))
 	.register(new GetExpensesCommand(expensePresenter));
