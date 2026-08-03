@@ -1,7 +1,8 @@
 export interface PayoutsResponse {
 	transactions: PayoutTransaction[];
 	total: number;
-	eachShare: number;
+	eachShare: number | null;
+	accumulatedShares: Array<{ user: string; amount: number }>;
 }
 
 export interface PayoutTransaction {

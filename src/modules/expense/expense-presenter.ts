@@ -54,7 +54,7 @@ export class ExpensePresenter {
 
 	async getPayouts(chatId: string) {
 		try {
-			const { transactions, total, eachShare } =
+			const { transactions, total, eachShare, accumulatedShares } =
 				await this.expenseService.getPayouts(chatId);
 
 			const transactionMessages = transactions.map(
@@ -62,12 +62,24 @@ export class ExpensePresenter {
 					`${debtor.user} debe ${formatAmount(payerAmount)} a ${creditor.user}`,
 			);
 
+			const shareSummary =
+				eachShare == null
+					? [
+							"Parte acumulada:",
+							...accumulatedShares.map(
+								({ user, amount }) => `- ${user}: ${formatAmount(amount)}`,
+							),
+						].join("\n")
+					: `Por persona: ${formatAmount(eachShare)}`;
+
 			const message = [
 				"💸 Ajuste de cuentas",
 				"",
-				`Total: ${formatAmount(total)}`,
-				`Por persona: ${formatAmount(eachShare)}`,
+				`Total de gastos: ${formatAmount(total)}`,
 				"",
+				shareSummary,
+				"",
+				"Para saldar:",
 				transactionMessages.map((t) => `- ${t}`).join("\n"),
 			].join("\n");
 

@@ -9,10 +9,15 @@ import {
 import type { ExpenseRepository } from "./expense.repository";
 import type { PayoutsResponse, PayoutTransaction } from "./expense.types";
 
+type ExpenseGroupService = Pick<
+	GroupService,
+	"checkUserIsInGroup" | "getActive" | "getUsers"
+>;
+
 export class ExpenseService {
 	constructor(
 		private expenseRepository: ExpenseRepository,
-		private groupService: GroupService,
+		private groupService: ExpenseGroupService,
 	) {}
 
 	async getAll(chatId: string) {
@@ -99,16 +104,23 @@ export class ExpenseService {
 			usersBalance[user] = 0;
 		});
 
+		const accumulatedShares: Record<string, number> = {};
+		usersList.forEach((user) => {
+			accumulatedShares[user] = 0;
+		});
+
+		const participantSets: string[][] = [];
 		for (const expense of expensesList) {
 			const splitBetween = await this.getSplitBetween(expense.id);
-
 			const expenseUsers = splitBetween.map((user) => user.userName);
-			const share = expense.amount / expenseUsers.length;
+			participantSets.push([...expenseUsers].sort());
 
+			const share = expense.amount / expenseUsers.length;
 			usersBalance[expense.payer] += expense.amount;
 
 			for (const user of expenseUsers) {
 				usersBalance[user] -= share;
+				accumulatedShares[user] += share;
 			}
 		}
 
@@ -150,9 +162,29 @@ export class ExpenseService {
 			(acc, expense) => acc + expense.amount,
 			0,
 		);
-		const eachShare = total / usersList.length;
+		const firstParticipantSet = participantSets[0];
+		const hasIdenticalParticipantSets =
+			firstParticipantSet != null &&
+			participantSets.every(
+				(participants) =>
+					participants.length === firstParticipantSet.length &&
+					participants.every(
+						(participant, index) => participant === firstParticipantSet[index],
+					),
+			);
+		const eachShare = hasIdenticalParticipantSets
+			? total / firstParticipantSet.length
+			: null;
 
-		return { transactions, total, eachShare };
+		return {
+			transactions,
+			total,
+			eachShare,
+			accumulatedShares: usersList.map((user) => ({
+				user,
+				amount: accumulatedShares[user],
+			})),
+		};
 	}
 
 	private async getSplitBetween(expenseId: number) {
