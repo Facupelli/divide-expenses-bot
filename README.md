@@ -1,80 +1,95 @@
 # Divide Expenses Bot
 
-AI-assisted Telegram bot for tracking and splitting shared expenses from natural-language messages.
+AI-assisted Telegram bot for tracking and splitting shared expenses.
 
-The bot lets a group record expenses conversationally, understand who paid, how much, what it was for, and how the cost should be split. It is useful for trips, meetups, dinners, or any situation where a group needs to keep track of shared spending without using spreadsheets.
+Divide Expenses Bot combines natural-language input with traditional bot commands: expenses can be registered conversationally, while explicit commands provide predictable access to actions such as reviewing expenses and calculating the final settlement.
 
-## Overview
+It started as a tool for splitting expenses with friends without having to maintain a spreadsheet or manually calculate who owes whom.
 
-Instead of filling out forms, users can send messages like:
+## Product
 
-> Martín paid 5000 for beers
+Create a group, record expenses in plain language, review what everyone spent, and calculate the transfers required to settle the group.
 
-The bot interprets the message, extracts the relevant information, confirms the expense, stores it, and keeps track of what each person paid.
+<p align="center">
+  <img
+    src="./.github/assets/divide-expenses-register.jpeg"
+    alt="Telegram conversation creating an expense group and registering shared expenses using natural language"
+    width="250"
+  />
+  &nbsp;&nbsp;
+  <img
+    src="./.github/assets/divide-expenses-list.jpeg"
+    alt="Telegram bot listing the expenses registered for a group"
+    width="250"
+  />
+  &nbsp;&nbsp;
+  <img
+    src="./.github/assets/divide-expenses-settlement.jpeg"
+    alt="Telegram bot calculating the final payments required to settle shared expenses"
+    width="250"
+  />
+</p>
 
-It can also calculate the final settlement so the group knows who should pay whom to balance everything out.
+## Core capabilities
 
-## Features
+- Create groups of participants
+- Register expenses using natural-language messages
+- Detect payer, amount, description, and participants
+- Register multiple expenses from a single message
+- Review the group's expense history
+- Calculate who should pay whom to settle the group
+- Close a group and start a new one
+- Use explicit Telegram commands for common operations
 
-- Create a group of participants.
-- Register expenses from natural-language messages.
-- Detect payer, amount, description, and split participants.
-- Handle multiple expenses in a single message.
-- Confirm parsed expenses before saving them.
-- Show the full expense history.
-- Calculate settlement payments between group members.
-- Close a group and start a new one.
-- Persist data using SQLite.
-- Process Telegram messages asynchronously.
+## Engineering highlights
 
-## Tech Stack
+### AI as an input layer
 
-- **Language:** TypeScript
-- **Backend:** Express
-- **Database:** SQLite
-- **Messaging interface:** Telegram Bot API
-- **AI:** OpenAI GPT with function calling
-- **Queue / async processing:** BullMQ
+Natural-language messages are interpreted with OpenAI function calling and translated into structured application operations.
 
-## Technical Notes
+The model is responsible for understanding what the user means, while validation and financial calculations remain deterministic application logic.
 
-The project is designed so the AI layer and the messaging interface can be replaced independently. Telegram is currently used as the main interface, but the core expense-management logic is separated from the transport layer.
+This allows messages such as:
 
-Natural-language parsing is handled through OpenAI function calling. This allows the bot to convert informal user messages into structured actions, such as creating a group, adding an expense, listing expenses, or calculating settlements.
+> Waldo gastó 67000 en asado
 
-Message processing is handled asynchronously with BullMQ. For now, the worker uses sequential processing to preserve message order inside a chat, which is important when users send multiple expense-related messages in a row.
+to become structured expense records without moving accounting rules into the prompt.
 
-## Supported Actions
+### Commands + natural language
 
-The bot currently supports:
+Not every interaction needs AI.
 
-- Creating a group.
-- Adding expenses.
-- Adding multiple expenses from one message.
-- Listing all expenses.
-- Calculating settlement payments.
-- Closing the current group.
+The bot combines conversational input with explicit commands for operations where predictability and discoverability are useful, such as listing expenses or calculating the final settlement.
 
-Some actions are available through both natural-language messages and explicit bot commands.
+This keeps frequent data entry fast while preserving traditional bot controls for deterministic actions.
 
-## Roadmap
+### Domain boundaries
 
-Planned improvements:
+Telegram is treated as an interface rather than as the application itself.
 
-- Improve concurrency handling across multiple chats.
-- Add confirmation before closing a group.
-- Support audio messages.
-- Support adding or removing participants after group creation.
-- Support editing existing expenses.
-- Add grouped expense views by participant.
-- Expand test coverage for ambiguous or malformed user inputs.
+The code separates:
 
-## Demo
+- AI interpretation
+- group lifecycle
+- expense management and settlement
+- user management
+- Telegram-specific commands and message formatting
 
-You can try the bot by scanning the QR code in the first image.
+Domain modules do not depend directly on Telegram, Express, or BullMQ.
 
-<div align="center">
-  <img src="./images/bot-qr.jpeg" alt="Bot QR code" width="300" height="600" style="margin: 10px"/>
-  <img src="./images/demo-2.jpeg" alt="Bot demo conversation" width="300" height="600" style="margin: 10px"/>
-  <img src="./images/demo-2.2.jpeg" alt="Bot demo conversation details" width="300" height="600" style="margin: 10px"/>
-</div>
+### Ordered asynchronous processing
+
+Incoming messages are processed asynchronously with BullMQ.
+
+Processing is kept sequential where message order matters, preventing consecutive expense-related messages in the same conversation from being handled out of order.
+
+## Tech stack
+
+- TypeScript
+- Express
+- Telegram Bot API
+- OpenAI
+- BullMQ
+- Redis
+- SQLite
+- Drizzle ORM
