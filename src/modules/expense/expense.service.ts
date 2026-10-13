@@ -2,7 +2,13 @@ import { createHash } from "node:crypto";
 import { type Expense, insertExpenseSchema } from "../../db/schema";
 import type { GroupService } from "../group/group.service";
 import {
+	indexParticipantNames,
+	normalizeParticipantName,
+} from "../participant-name";
+import {
+	AmbiguousParticipantsError,
 	CreateExpenseError,
+	EmptyExpenseSplitError,
 	InvalidParticipantsError,
 	InvalidPayersError,
 	NoActiveGroupError,
@@ -19,13 +25,6 @@ export type ExpenseInput = {
 	description: string;
 	split: { mode: "all" | "include" | "exclude"; names: string[] };
 };
-
-function normalizeParticipantName(name: string): string {
-	return name
-		.normalize("NFD")
-		.replace(/\p{Diacritic}/gu, "")
-		.toLocaleLowerCase();
-}
 
 function greatestCommonDivisor(left: bigint, right: bigint): bigint {
 	let a = left;
@@ -107,9 +106,10 @@ export class ExpenseService {
 		}
 
 		const groupUsers = await this.groupService.getUsers(chatId);
-		const canonicalNames = new Map(
-			groupUsers.map((name) => [normalizeParticipantName(name), name]),
-		);
+		const { canonicalNames, conflicts } = indexParticipantNames(groupUsers);
+		if (conflicts.length > 0) {
+			throw new AmbiguousParticipantsError(conflicts);
+		}
 		const invalidParticipants = expenses.flatMap((expense) =>
 			expense.split.names.filter(
 				(name) => !canonicalNames.has(normalizeParticipantName(name)),
@@ -151,9 +151,8 @@ export class ExpenseService {
 									throw new InvalidParticipantsError([name]);
 								return canonical;
 							});
-			const splitBetween = requestedParticipants.includes(payer)
-				? [...new Set(requestedParticipants)]
-				: [payer, ...new Set(requestedParticipants)];
+			const splitBetween = [...new Set(requestedParticipants)];
+			if (splitBetween.length === 0) throw new EmptyExpenseSplitError();
 
 			return { ...expense, payer, splitBetween };
 		});

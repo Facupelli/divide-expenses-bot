@@ -8,3 +8,13 @@ export type UserErrorType =
 export class ActiveGroupError extends Error {
 	readonly tag = USER_ERROR_TYPE.ACTIVE_GROUP;
 }
+
+export class EmptyParticipantListError extends Error {}
+
+export class EmptyParticipantNameError extends Error {}
+
+export class DuplicateParticipantNamesError extends Error {
+	constructor(public readonly conflicts: string[][]) {
+		super();
+	}
+}

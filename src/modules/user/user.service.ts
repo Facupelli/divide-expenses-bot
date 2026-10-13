@@ -1,6 +1,12 @@
 import { insertUserSchema } from "../../db/schema";
 import type { GroupService } from "../group/group.service";
-import { ActiveGroupError } from "./user.errors";
+import { indexParticipantNames } from "../participant-name";
+import {
+	ActiveGroupError,
+	DuplicateParticipantNamesError,
+	EmptyParticipantListError,
+	EmptyParticipantNameError,
+} from "./user.errors";
 import type { SqliteUserRepository } from "./user.sqlite.repository";
 
 export class UserService {
@@ -16,16 +22,28 @@ export class UserService {
 			throw new ActiveGroupError();
 		}
 
+		if (names.length === 0) throw new EmptyParticipantListError();
+		const trimmedNames = names.map((name) => name.trim());
+		if (trimmedNames.some((name) => name.length === 0)) {
+			throw new EmptyParticipantNameError();
+		}
+
+		const { conflicts } = indexParticipantNames(names);
+		if (conflicts.length > 0) {
+			throw new DuplicateParticipantNamesError(conflicts);
+		}
+
 		const newGroup = await this.groupService.save({
 			chatId,
 			isActive: true,
 		});
 
-		const validated = names.map((n) =>
-			insertUserSchema.parse({ name: n, groupId: newGroup.id }),
+		const validated = trimmedNames.map((name) =>
+			insertUserSchema.parse({ name, groupId: newGroup.id }),
 		);
 
-		return await this.userRepository.saveMultiple(validated);
+		await this.userRepository.saveMultiple(validated);
+		return trimmedNames;
 	}
 
 	async getAll() {

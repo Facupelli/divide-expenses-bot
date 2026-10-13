@@ -23,6 +23,7 @@ function createExpense(id: number, payer: string, amount: number): Expense {
 function createService(
 	expenses: Expense[],
 	participantsByExpense: Map<number, string[]>,
+	groupUsers: string[] = users,
 ): ExpenseService {
 	const expenseRepository: ExpenseRepository = {
 		getAll: async () =>
@@ -39,11 +40,33 @@ function createService(
 	const groupService = {
 		checkUserIsInGroup: async () => true,
 		getActive: async () => 1,
-		getUsers: async () => users,
+		getUsers: async () => groupUsers,
 	};
 
 	return new ExpenseService(expenseRepository, groupService);
 }
+
+test("settles an expense paid by someone outside its split", async () => {
+	const service = createService(
+		[createExpense(1, "Pelli", 900_000)],
+		new Map([[1, ["Waldo", "Shefri"]]]),
+		["Pelli", "Waldo", "Shefri"],
+	);
+
+	const result = await service.getPayouts("chat-id");
+	assert.equal(result.eachShare, BigInt(450_000));
+	assert.deepEqual(
+		result.transactions.map(({ debtor, payerAmount, creditor }) => ({
+			debtor: debtor.user,
+			amount: payerAmount,
+			creditor: creditor.user,
+		})),
+		[
+			{ debtor: "Waldo", amount: BigInt(450_000), creditor: "Pelli" },
+			{ debtor: "Shefri", amount: BigInt(450_000), creditor: "Pelli" },
+		],
+	);
+});
 
 test("shows accumulated shares when expenses have different participant sets", async () => {
 	const service = createService(

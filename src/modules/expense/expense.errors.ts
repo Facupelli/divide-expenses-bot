@@ -10,6 +10,14 @@ export type ExpenseErrorType =
 
 export class CreateExpenseError extends Error {}
 
+export class EmptyExpenseSplitError extends Error {}
+
+export class AmbiguousParticipantsError extends Error {
+	constructor(public readonly conflicts: string[][]) {
+		super();
+	}
+}
+
 export class InvalidParticipantsError extends Error {
 	readonly tag = EXPENSE_ERROR_TYPE.INVALID_PARTICIPANTS;
 	constructor(public readonly participants: string[]) {

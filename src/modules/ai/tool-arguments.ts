@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseAmountToCents } from "../expense/money";
+import { normalizeParticipantName } from "../participant-name";
 
 export const expenseArguments = z
 	.object({
@@ -27,12 +28,7 @@ export const expenseArguments = z
 								mode === "all" ? names.length === 0 : names.length > 0,
 							)
 							.refine(({ names }) => {
-								const normalized = names.map((name) =>
-									name
-										.normalize("NFD")
-										.replace(/\p{Diacritic}/gu, "")
-										.toLocaleLowerCase(),
-								);
+								const normalized = names.map(normalizeParticipantName);
 								return new Set(normalized).size === names.length;
 							}),
 					})

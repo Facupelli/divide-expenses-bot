@@ -13,8 +13,8 @@ export class UserPresenter {
 
 	async addUsers(names: string[], chatId: string) {
 		try {
-			await this.userService.saveMultiple(names, chatId);
-			const message = createSuccessUserMessage(names);
+			const savedNames = await this.userService.saveMultiple(names, chatId);
+			const message = createSuccessUserMessage(savedNames);
 			return { success: true, message };
 		} catch (error) {
 			return {

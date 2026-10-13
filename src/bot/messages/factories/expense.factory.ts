@@ -1,6 +1,8 @@
 import type { Expense } from "../../../db/schema";
 import {
+	AmbiguousParticipantsError,
 	CreateExpenseError,
+	EmptyExpenseSplitError,
 	InvalidParticipantsError,
 	InvalidPayersError,
 	NoActiveGroupError,
@@ -97,6 +99,17 @@ export function createErrorExpenseMessage(error: unknown): string {
 			.map((participant) => `• ${participant}`)
 			.join("\n");
 		return `❌ No se reconocieron estos participantes:\n${list}`;
+	}
+
+	if (error instanceof EmptyExpenseSplitError) {
+		return "❌ El gasto debe dividirse entre al menos un participante del grupo.";
+	}
+
+	if (error instanceof AmbiguousParticipantsError) {
+		const list = error.conflicts
+			.map((names) => `• ${names.join(" / ")}`)
+			.join("\n");
+		return `❌ No se puede registrar el gasto porque estos nombres del grupo son ambiguos:\n${list}\nCierra el grupo y crea uno nuevo con nombres distintos.`;
 	}
 
 	if (error instanceof CreateExpenseError) {
