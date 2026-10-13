@@ -71,28 +71,26 @@ const tools: Tool[] = [
 								description:
 									"Concepto o descripción del gasto (ej: cena, gasolina, snacks)",
 							},
-							splitBetween: {
-								type: "array",
-								items: {
-									type: "string",
+							split: {
+								type: "object",
+								description: "Selección de participantes para dividir el gasto",
+								properties: {
+									mode: {
+										type: "string",
+										enum: ["all", "include", "exclude"],
+									},
+									names: {
+										type: "array",
+										items: { type: "string" },
+										description:
+											"Nombres seleccionados: [] para all; personas incluidas para include; excluidas para exclude",
+									},
 								},
-								description:
-									"Lista de nombres de las personas entre las que se debe dividir un gasto",
-							},
-							excludedParticipants: {
-								type: "array",
-								items: { type: "string" },
-								description:
-									"Participantes excluidos explícitamente. Para 'todos menos Abdul', usar ['Abdul']. Usar [] si no hay exclusiones.",
+								required: ["mode", "names"],
+								additionalProperties: false,
 							},
 						},
-						required: [
-							"payer",
-							"amount",
-							"description",
-							"splitBetween",
-							"excludedParticipants",
-						],
+						required: ["payer", "amount", "description", "split"],
 						additionalProperties: false,
 					},
 					minItems: 1,

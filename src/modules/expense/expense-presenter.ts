@@ -4,7 +4,7 @@ import {
 	createSuccessExpenseMessage,
 } from "../../bot/messages/factories/expense.factory";
 import { formatAmount } from "./expense.helpers";
-import type { ExpenseService } from "./expense.service";
+import type { ExpenseInput, ExpenseService } from "./expense.service";
 
 export class ExpensePresenter {
 	constructor(private expenseService: ExpenseService) {}
@@ -27,13 +27,7 @@ export class ExpensePresenter {
 	}
 
 	async addExpenses(
-		expenses: Array<{
-			payer: string;
-			amount: string;
-			description: string;
-			splitBetween: string[];
-			excludedParticipants?: string[];
-		}>,
+		expenses: ExpenseInput[],
 		chatId: string,
 		idempotencyKey: string,
 	) {

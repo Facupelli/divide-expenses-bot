@@ -13,12 +13,11 @@ import { parseAmountToCents } from "./money";
 
 type Fraction = { numerator: bigint; denominator: bigint };
 
-type ExpenseInput = {
+export type ExpenseInput = {
 	payer: string;
 	amount: string;
 	description: string;
-	splitBetween: string[];
-	excludedParticipants?: string[];
+	split: { mode: "all" | "include" | "exclude"; names: string[] };
 };
 
 function normalizeParticipantName(name: string): string {
@@ -112,7 +111,7 @@ export class ExpenseService {
 			groupUsers.map((name) => [normalizeParticipantName(name), name]),
 		);
 		const invalidParticipants = expenses.flatMap((expense) =>
-			[...expense.splitBetween, ...(expense.excludedParticipants ?? [])].filter(
+			expense.split.names.filter(
 				(name) => !canonicalNames.has(normalizeParticipantName(name)),
 			),
 		);
@@ -120,43 +119,44 @@ export class ExpenseService {
 			throw new InvalidParticipantsError([...new Set(invalidParticipants)]);
 		}
 
+		const invalidPayers = expenses
+			.filter(
+				(expense) =>
+					!canonicalNames.has(normalizeParticipantName(expense.payer)),
+			)
+			.map((expense) => expense.payer);
+		if (invalidPayers.length > 0) {
+			throw new InvalidPayersError(invalidPayers);
+		}
+
 		const canonicalExpenses = expenses.map((expense) => {
 			const payer = canonicalNames.get(normalizeParticipantName(expense.payer));
-			if (payer == null) {
-				return { ...expense, payer: expense.payer };
-			}
+			if (payer == null) throw new InvalidPayersError([expense.payer]);
 
-			const excluded = new Set(
-				(expense.excludedParticipants ?? []).map(normalizeParticipantName),
+			const selected = new Set(
+				expense.split.names.map(normalizeParticipantName),
 			);
 			const requestedParticipants =
-				excluded.size > 0
-					? groupUsers.filter(
-							(name) => !excluded.has(normalizeParticipantName(name)),
-						)
-					: expense.splitBetween.flatMap((name) => {
-							const canonical = canonicalNames.get(
-								normalizeParticipantName(name),
-							);
-							return canonical == null ? [] : [canonical];
-						});
+				expense.split.mode === "all"
+					? groupUsers
+					: expense.split.mode === "exclude"
+						? groupUsers.filter(
+								(name) => !selected.has(normalizeParticipantName(name)),
+							)
+						: expense.split.names.map((name) => {
+								const canonical = canonicalNames.get(
+									normalizeParticipantName(name),
+								);
+								if (canonical == null)
+									throw new InvalidParticipantsError([name]);
+								return canonical;
+							});
 			const splitBetween = requestedParticipants.includes(payer)
 				? [...new Set(requestedParticipants)]
 				: [payer, ...new Set(requestedParticipants)];
 
 			return { ...expense, payer, splitBetween };
 		});
-		const invalidPayers = canonicalExpenses
-			.filter(
-				(expense) =>
-					!canonicalNames.has(normalizeParticipantName(expense.payer)),
-			)
-			.map((expense) => expense.payer);
-
-		if (invalidPayers.length > 0) {
-			throw new InvalidPayersError(invalidPayers);
-		}
-
 		try {
 			const expensesInCents = canonicalExpenses.map((expense) => ({
 				...expense,

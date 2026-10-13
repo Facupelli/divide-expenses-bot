@@ -1,7 +1,50 @@
 import type { ResponseInput } from "openai/resources/responses/responses.js";
+import { z } from "zod";
 import type { ExpensePresenter } from "../expense/expense-presenter";
+import { parseAmountToCents } from "../expense/money";
 import type { UserPresenter } from "../user/user-presenter";
 import type { AIProvider } from "./types";
+
+const expenseArguments = z
+	.object({
+		expenses: z
+			.array(
+				z
+					.object({
+						payer: z.string().min(1),
+						amount: z.string().refine((amount) => {
+							try {
+								parseAmountToCents(amount);
+								return true;
+							} catch {
+								return false;
+							}
+						}),
+						description: z.string().min(1),
+						split: z
+							.object({
+								mode: z.enum(["all", "include", "exclude"]),
+								names: z.array(z.string().min(1)),
+							})
+							.strict()
+							.refine(({ mode, names }) =>
+								mode === "all" ? names.length === 0 : names.length > 0,
+							)
+							.refine(({ names }) => {
+								const normalized = names.map((name) =>
+									name
+										.normalize("NFD")
+										.replace(/\p{Diacritic}/gu, "")
+										.toLocaleLowerCase(),
+								);
+								return new Set(normalized).size === names.length;
+							}),
+					})
+					.strict(),
+			)
+			.min(1),
+	})
+	.strict();
 
 const history: Record<number, ResponseInput> = {};
 
@@ -61,14 +104,33 @@ export class AIService {
 			}
 
 			const name = toolCall.name;
-			const args = JSON.parse(toolCall.arguments);
-
-			const result = await this.callFunction(
-				name,
-				args,
-				String(chatId),
-				`${idempotencyKey}:${name}`,
-			);
+			let args: unknown;
+			try {
+				args = JSON.parse(toolCall.arguments);
+			} catch {
+				if (name !== "add_expense") throw new Error("Invalid tool arguments");
+				toolMessages.push(
+					"❌ Datos del gasto inválidos. Por favor, aclara el gasto.",
+				);
+				continue;
+			}
+			let result: { message: string } | undefined;
+			if (name === "add_expense") {
+				const validated = expenseArguments.safeParse(args);
+				if (!validated.success) {
+					toolMessages.push(
+						"❌ Datos del gasto inválidos. Por favor, aclara el gasto.",
+					);
+					continue;
+				}
+				result = await this.expensePresenter.addExpenses(
+					validated.data.expenses,
+					String(chatId),
+					`${idempotencyKey}:${name}`,
+				);
+			} else {
+				result = await this.callFunction(name, args, String(chatId));
+			}
 			console.log("FUNCTION CALLING RESULT:", { result });
 
 			if (result) {
@@ -82,12 +144,7 @@ export class AIService {
 		}
 	}
 
-	private async callFunction(
-		name: string,
-		args: any,
-		chatId: string,
-		idempotencyKey: string,
-	) {
+	private async callFunction(name: string, args: unknown, chatId: string) {
 		if (name === "get_payouts") {
 			return await this.expensePresenter.getPayouts(chatId);
 		}
@@ -95,13 +152,12 @@ export class AIService {
 			return await this.expensePresenter.getAllExpenses(chatId);
 		}
 		if (name === "add_participants") {
-			return await this.userPresenter.addUsers(args.names, chatId);
-		}
-		if (name === "add_expense") {
-			return await this.expensePresenter.addExpenses(
-				args.expenses,
+			return await this.userPresenter.addUsers(
+				z
+					.object({ names: z.array(z.string()) })
+					.strict()
+					.parse(args).names,
 				chatId,
-				idempotencyKey,
 			);
 		}
 	}
