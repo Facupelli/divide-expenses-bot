@@ -121,9 +121,11 @@ export class OpenAIAdapter implements AIProvider {
 			}
 
 			const response = await this.openai.responses.create({
-				model: "gpt-4.1-nano-2025-04-14",
+				model: "gpt-6-luna",
 				instructions,
 				tools,
+				tool_choice: "auto",
+				parallel_tool_calls: false,
 				input: inputArray,
 			});
 
