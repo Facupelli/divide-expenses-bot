@@ -1,50 +1,11 @@
 import type { ResponseInput } from "openai/resources/responses/responses.js";
-import { z } from "zod";
 import type { ExpensePresenter } from "../expense/expense-presenter";
-import { parseAmountToCents } from "../expense/money";
 import type { UserPresenter } from "../user/user-presenter";
+import { expenseArguments, participantArguments } from "./tool-arguments";
 import type { AIProvider } from "./types";
 
-const expenseArguments = z
-	.object({
-		expenses: z
-			.array(
-				z
-					.object({
-						payer: z.string().min(1),
-						amount: z.string().refine((amount) => {
-							try {
-								parseAmountToCents(amount);
-								return true;
-							} catch {
-								return false;
-							}
-						}),
-						description: z.string().min(1),
-						split: z
-							.object({
-								mode: z.enum(["all", "include", "exclude"]),
-								names: z.array(z.string().min(1)),
-							})
-							.strict()
-							.refine(({ mode, names }) =>
-								mode === "all" ? names.length === 0 : names.length > 0,
-							)
-							.refine(({ names }) => {
-								const normalized = names.map((name) =>
-									name
-										.normalize("NFD")
-										.replace(/\p{Diacritic}/gu, "")
-										.toLocaleLowerCase(),
-								);
-								return new Set(normalized).size === names.length;
-							}),
-					})
-					.strict(),
-			)
-			.min(1),
-	})
-	.strict();
+const invalidToolArgumentsMessage =
+	"❌ Datos inválidos. Por favor, aclara tu mensaje.";
 
 const history: Record<number, ResponseInput> = {};
 
@@ -89,11 +50,6 @@ export class AIService {
 			augmentedInstructions,
 		);
 
-		if (response.output_text) {
-			push(chatId, "assistant", response.output_text);
-			return response.output_text;
-		}
-
 		console.log("TOOLCALL", response.output);
 
 		const toolMessages: string[] = [];
@@ -103,38 +59,26 @@ export class AIService {
 				continue;
 			}
 
-			const name = toolCall.name;
 			let args: unknown;
 			try {
 				args = JSON.parse(toolCall.arguments);
-			} catch {
-				if (name !== "add_expense") throw new Error("Invalid tool arguments");
-				toolMessages.push(
-					"❌ Datos del gasto inválidos. Por favor, aclara el gasto.",
-				);
+			} catch (error) {
+				if (!(error instanceof SyntaxError)) throw error;
+				toolMessages.push(invalidToolArgumentsMessage);
 				continue;
 			}
-			let result: { message: string } | undefined;
-			if (name === "add_expense") {
-				const validated = expenseArguments.safeParse(args);
-				if (!validated.success) {
-					toolMessages.push(
-						"❌ Datos del gasto inválidos. Por favor, aclara el gasto.",
-					);
-					continue;
-				}
-				result = await this.expensePresenter.addExpenses(
-					validated.data.expenses,
-					String(chatId),
-					`${idempotencyKey}:${name}`,
-				);
-			} else {
-				result = await this.callFunction(name, args, String(chatId));
-			}
+			const result = await this.callFunction(
+				toolCall.name,
+				args,
+				String(chatId),
+				idempotencyKey,
+			);
 			console.log("FUNCTION CALLING RESULT:", { result });
 
 			if (result) {
-				history[chatId] = [];
+				if (!("validationFailed" in result)) {
+					history[chatId] = [];
+				}
 				toolMessages.push(result.message);
 			}
 		}
@@ -142,23 +86,48 @@ export class AIService {
 		if (toolMessages.length > 0) {
 			return toolMessages;
 		}
+
+		if (response.output_text) {
+			push(chatId, "assistant", response.output_text);
+			return response.output_text;
+		}
 	}
 
-	private async callFunction(name: string, args: unknown, chatId: string) {
-		if (name === "get_payouts") {
-			return await this.expensePresenter.getPayouts(chatId);
-		}
-		if (name === "get_expenses") {
-			return await this.expensePresenter.getAllExpenses(chatId);
-		}
-		if (name === "add_participants") {
-			return await this.userPresenter.addUsers(
-				z
-					.object({ names: z.array(z.string()) })
-					.strict()
-					.parse(args).names,
-				chatId,
-			);
+	private async callFunction(
+		name: string,
+		args: unknown,
+		chatId: string,
+		idempotencyKey: string,
+	) {
+		switch (name) {
+			case "get_payouts":
+				return await this.expensePresenter.getPayouts(chatId);
+			case "get_expenses":
+				return await this.expensePresenter.getAllExpenses(chatId);
+			case "add_participants": {
+				const validated = participantArguments.safeParse(args);
+				if (!validated.success) {
+					return {
+						message: invalidToolArgumentsMessage,
+						validationFailed: true,
+					};
+				}
+				return await this.userPresenter.addUsers(validated.data.names, chatId);
+			}
+			case "add_expense": {
+				const validated = expenseArguments.safeParse(args);
+				if (!validated.success) {
+					return {
+						message: invalidToolArgumentsMessage,
+						validationFailed: true,
+					};
+				}
+				return await this.expensePresenter.addExpenses(
+					validated.data.expenses,
+					chatId,
+					`${idempotencyKey}:${name}`,
+				);
+			}
 		}
 	}
 }
